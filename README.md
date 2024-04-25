@@ -1,2 +1,2 @@
 # GoSnakeGo
-A snake in Go 
+A triple A snake in Go

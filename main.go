@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"image"
 	"image/color"
 	"math/rand"
@@ -8,6 +9,9 @@ import (
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
+	"github.com/hajimehoshi/ebiten/v2/text"
+	"golang.org/x/image/font"
+	"golang.org/x/image/font/basicfont"
 )
 
 const (
@@ -23,6 +27,7 @@ type Game struct {
 	width      int
 	height     int
 	updateTick int
+	score      int
 }
 
 type Point struct {
@@ -63,6 +68,7 @@ func (g *Game) Update() error {
 	if newHead == g.food {
 		g.snake = append(g.snake, g.food)
 		g.spawnFood()
+		g.score++
 	}
 
 	// Control snake
@@ -91,6 +97,9 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		snakeRect := image.Rect(p.X*gridSize, p.Y*gridSize, (p.X+1)*gridSize, (p.Y+1)*gridSize)
 		ebitenutil.DrawRect(screen, float64(snakeRect.Min.X), float64(snakeRect.Min.Y), float64(gridSize), float64(gridSize), color.RGBA{R: 0, G: 255, B: 0, A: 255})
 	}
+
+	// Draw score
+	text.Draw(screen, fmt.Sprintf("Score: %d", g.score), basicFont(), 10, 20, color.White)
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
@@ -103,6 +112,7 @@ func (g *Game) initGame() error {
 	g.width = screenWidth / gridSize
 	g.height = screenHeight / gridSize
 	g.spawnFood()
+	g.score = 0
 	return nil
 }
 
@@ -122,6 +132,11 @@ func (g *Game) spawnFood() {
 			break
 		}
 	}
+}
+
+func basicFont() font.Face {
+	const dpi = 72
+	return basicfont.Face7x13
 }
 
 func main() {

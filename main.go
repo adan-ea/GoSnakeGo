@@ -28,6 +28,7 @@ type Game struct {
 	height     int
 	updateTick int
 	score      int
+	gameOver   bool
 }
 
 type Point struct {
@@ -39,6 +40,10 @@ func init() {
 }
 
 func (g *Game) Update() error {
+	if g.gameOver {
+		return nil
+	}
+
 	g.updateTick++
 	if g.updateTick%10 != 0 {
 		return nil
@@ -51,13 +56,15 @@ func (g *Game) Update() error {
 
 	// Collision with boundaries
 	if newHead.X < 0 || newHead.X >= g.width || newHead.Y < 0 || newHead.Y >= g.height {
-		return g.initGame()
+		g.gameOver = true
+		return nil
 	}
 
 	// Collision with itself
 	for _, v := range g.snake[1:] {
 		if v == newHead {
-			return g.initGame()
+			g.gameOver = true
+			return nil
 		}
 	}
 
@@ -88,6 +95,13 @@ func (g *Game) Update() error {
 func (g *Game) Draw(screen *ebiten.Image) {
 	screen.Fill(color.RGBA{R: 10, G: 30, B: 10, A: 255})
 
+	if g.gameOver {
+		text.Draw(screen, "Game Over", basicFont(), screenWidth/2-50, screenHeight/2, color.White)
+		text.Draw(screen, fmt.Sprintf("Score: %d", g.score), basicFont(), screenWidth/2-20, screenHeight/2+20, color.White)
+		text.Draw(screen, "Press SPACE to Restart", basicFont(), screenWidth/2-80, screenHeight/2+40, color.White)
+		return
+	}
+
 	// Draw food
 	foodRect := image.Rect(g.food.X*gridSize, g.food.Y*gridSize, (g.food.X+1)*gridSize, (g.food.Y+1)*gridSize)
 	ebitenutil.DrawRect(screen, float64(foodRect.Min.X), float64(foodRect.Min.Y), float64(gridSize), float64(gridSize), color.RGBA{R: 255, G: 0, B: 0, A: 255})
@@ -113,6 +127,7 @@ func (g *Game) initGame() error {
 	g.height = screenHeight / gridSize
 	g.spawnFood()
 	g.score = 0
+	g.gameOver = false
 	return nil
 }
 

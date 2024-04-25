@@ -69,7 +69,6 @@ func (g *Game) Update() error {
 		g.snake = append(g.snake, g.food)
 		g.spawnFood()
 		g.score++
-		fmt.Println(g.score)
 	}
 
 	// Control snake

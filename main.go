@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"image"
 	"image/color"
 	"math/rand"
@@ -23,6 +24,7 @@ type Game struct {
 	width      int
 	height     int
 	updateTick int
+	score      int
 }
 
 type Point struct {
@@ -63,6 +65,8 @@ func (g *Game) Update() error {
 	if newHead == g.food {
 		g.snake = append(g.snake, g.food)
 		g.spawnFood()
+		g.score++
+		fmt.Println(g.score)
 	}
 
 	// Control snake
@@ -103,6 +107,7 @@ func (g *Game) initGame() error {
 	g.width = screenWidth / gridSize
 	g.height = screenHeight / gridSize
 	g.spawnFood()
+	g.score = 0
 	return nil
 }
 

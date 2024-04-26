@@ -6,13 +6,15 @@ import (
 	"image"
 	_ "image/png"
 	"log"
+
+	//math
 	"math/rand"
 	"os"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/audio"
 	"github.com/hajimehoshi/ebiten/v2/audio/mp3"
-	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
+	"github.com/hajimehoshi/ebiten/v2/ebitenutil" // Ensure ebitenutil is imported
 	"github.com/hajimehoshi/ebiten/v2/text"
 	"golang.org/x/image/font"
 	"golang.org/x/image/font/basicfont"
@@ -49,35 +51,6 @@ var (
 	runnerImage *ebiten.Image
 )
 
-func createAudioContext() (*audio.Context, error) {
-	context, err := audio.NewContext(44100) // Create audio context
-	if err != nil {
-		return nil, fmt.Errorf("Failed to create audio context: %w", err)
-	}
-	return context, nil
-}
-
-func main() {
-	game := &Game{}
-
-	// Ensure audio context is created before using game
-	var err error
-	game.audioContext, err = createAudioContext()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	game.initGame()
-
-	imgData, _, err := image.Decode(bytes.NewReader(images.Runner_png))
-	if err != nil {
-		log.Fatal(err)
-	}
-	img = ebiten.NewImageFromImage(imgData)
-
-	ebiten.RunGame(game)
-}
-
 func (g *Game) initGame() error {
 	g.snake = []utils.Point{{X: 5, Y: 5}, {X: 4, Y: 5}, {X: 3, Y: 5}}
 	g.dir = utils.Right
@@ -87,11 +60,12 @@ func (g *Game) initGame() error {
 	g.score = 0
 	g.gameOver = false
 
+	g.audioContext = audio.NewContext(44100)
 	f, err := os.ReadFile("assets/music.mp3")
 	if err != nil {
 		log.Fatalf("Failed to read audio file: %v", err)
 	}
-	d, err := mp3.Decode(g.audioContext, bytes.NewReader(f)) // Use assigned audioContext
+	d, err := mp3.Decode(g.audioContext, bytes.NewReader(f))
 	if err != nil {
 		log.Fatalf("Failed to decode MP3: %v", err)
 	}
@@ -215,4 +189,15 @@ func (g *Game) spawnFood() {
 
 func basicFont() font.Face {
 	return basicfont.Face7x13
+}
+
+func main() {
+	game := &Game{}
+	game.initGame()
+	imgData, _, err := image.Decode(bytes.NewReader(images.Runner_png))
+	if err != nil {
+		log.Fatal(err)
+	}
+	img = ebiten.NewImageFromImage(imgData)
+	ebiten.RunGame(game)
 }

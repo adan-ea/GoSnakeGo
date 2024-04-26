@@ -89,12 +89,10 @@ func (g *Game) Update() error {
 		if g.scoreregister == false {
 			if g.score != 0 {
 				file_content += strconv.Itoa(g.score) + "\n"
-
 				scoresStr := strings.Split(file_content, "\n")
 
 				scores := make([]int, len(scoresStr))
 				for i, scoreStr := range scoresStr {
-					fmt.Println(scoreStr)
 					if scoreStr != "" {
 						score, err := strconv.Atoi(scoreStr)
 						if err != nil {
@@ -104,20 +102,20 @@ func (g *Game) Update() error {
 					}
 				}
 
-				// Trier les scores en ordre décroissant
 				sort.Slice(scores, func(i, j int) bool {
 					return scores[i] > scores[j]
 				})
 
-				// Convertir les scores triés en chaînes
+				var fscores = make([]string, 3)
 				for i, score := range scores {
-					if score != 0 {
-						scoresStr[i] = strconv.Itoa(score)
+					if i < 3 {
+						if score != 0 {
+							fscores[i] = strconv.Itoa(score)
+						}
 					}
 				}
 
-				// Joindre les scores avec des sauts de ligne
-				file_content = strings.Join(scoresStr, "\n")
+				file_content = strings.Join(fscores, "\n")
 				file_content += "\n"
 
 				ioutil.WriteFile("resources/scoreboard.txt", []byte(file_content), 0644)

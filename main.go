@@ -43,11 +43,17 @@ var (
 )
 
 var (
+	img         *ebiten.Image
 	runnerImage *ebiten.Image
 )
 
 func init() {
 	rand.Seed(time.Now().UnixNano())
+	var err error
+	img, _, err = ebitenutil.NewImageFromFile("assets/adriensexyy.png")
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 func HandleKeyPressed(g *Game) bool {

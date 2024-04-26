@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"image"
+	"log"
 	"math/rand"
 	"time"
 
@@ -27,8 +28,15 @@ type Game struct {
 	gameOver   bool
 }
 
+var img *ebiten.Image
+
 func init() {
 	rand.Seed(time.Now().UnixNano())
+	var err error
+	img, _, err = ebitenutil.NewImageFromFile("assets/adriensexyy.png")
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 func (g *Game) Update() error {
@@ -92,13 +100,18 @@ func (g *Game) Update() error {
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
-	screen.Fill(utils.GetBlackColor())
+	screen.Fill(utils.GetDarkGreenColor())
 
 	if g.gameOver {
-		text.Draw(screen, "Game Over", basicFont(), utils.ScreenWidth/2-25, utils.ScreenHeight/2, utils.GetWhiteColor())
-		text.Draw(screen, fmt.Sprintf("Score: %d", g.score), basicFont(), utils.ScreenWidth/2-20, utils.ScreenHeight/2+20, utils.GetWhiteColor())
-		text.Draw(screen, fmt.Sprintf("Best Score: %d", g.bestScore), basicFont(), utils.ScreenWidth/2-30, utils.ScreenHeight/2+40, utils.GetWhiteColor())
-		text.Draw(screen, "Press SPACE to Restart", basicFont(), utils.ScreenWidth/2-80, utils.ScreenHeight/2+60, utils.GetWhiteColor())
+		screen.DrawImage(img, nil)
+
+		oneFifthHeight := utils.ScreenHeight / 8
+		// Dessiner le texte à la position calculée
+		text.Draw(screen, "Game Over", basicFont(), utils.ScreenWidth/2-25, oneFifthHeight, utils.GetBlackColor())
+		text.Draw(screen, fmt.Sprintf("Score: %d", g.score), basicFont(), utils.ScreenWidth/2-20, oneFifthHeight+20, utils.GetBlackColor())
+		text.Draw(screen, fmt.Sprintf("Best Score: %d", g.bestScore), basicFont(), utils.ScreenWidth/2-30, oneFifthHeight+40, utils.GetBlackColor())
+		text.Draw(screen, "Press SPACE to Restart", basicFont(), utils.ScreenWidth/2-80, oneFifthHeight+60, utils.GetBlackColor())
+
 		return
 	}
 

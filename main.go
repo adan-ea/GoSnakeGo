@@ -33,6 +33,9 @@ func init() {
 
 func (g *Game) Update() error {
 	if g.gameOver {
+		if ebiten.IsKeyPressed(ebiten.KeySpace) {
+			g.initGame()
+		}
 		return nil
 	}
 

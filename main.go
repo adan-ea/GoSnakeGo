@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"image"
-	"image/color"
 	"math/rand"
 	"time"
 
@@ -12,12 +11,8 @@ import (
 	"github.com/hajimehoshi/ebiten/v2/text"
 	"golang.org/x/image/font"
 	"golang.org/x/image/font/basicfont"
-)
 
-const (
-	screenWidth  = 800
-	screenHeight = 600
-	gridSize     = 20
+	"gosnakego/utils"
 )
 
 type Game struct {
@@ -93,38 +88,38 @@ func (g *Game) Update() error {
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
-	screen.Fill(color.RGBA{R: 10, G: 30, B: 10, A: 255})
+	screen.Fill(utils.GetBlackColor())
 
 	if g.gameOver {
-		text.Draw(screen, "Game Over", basicFont(), screenWidth/2-50, screenHeight/2, color.White)
-		text.Draw(screen, fmt.Sprintf("Score: %d", g.score), basicFont(), screenWidth/2-20, screenHeight/2+20, color.White)
-		text.Draw(screen, "Press SPACE to Restart", basicFont(), screenWidth/2-80, screenHeight/2+40, color.White)
+		text.Draw(screen, "Game Over", basicFont(), utils.ScreenWidth/2-25, utils.ScreenHeight/2, utils.GetWhiteColor())
+		text.Draw(screen, fmt.Sprintf("Score: %d", g.score), basicFont(), utils.ScreenWidth/2-20, utils.ScreenHeight/2+20, utils.GetWhiteColor())
+		text.Draw(screen, "Press SPACE to Restart", basicFont(), utils.ScreenWidth/2-80, utils.ScreenHeight/2+40, utils.GetWhiteColor())
 		return
 	}
 
 	// Draw food
-	foodRect := image.Rect(g.food.X*gridSize, g.food.Y*gridSize, (g.food.X+1)*gridSize, (g.food.Y+1)*gridSize)
-	ebitenutil.DrawRect(screen, float64(foodRect.Min.X), float64(foodRect.Min.Y), float64(gridSize), float64(gridSize), color.RGBA{R: 255, G: 0, B: 0, A: 255})
+	foodRect := image.Rect(g.food.X*utils.GridSize, g.food.Y*utils.GridSize, (g.food.X+1)*utils.GridSize, (g.food.Y+1)*utils.GridSize)
+	ebitenutil.DrawRect(screen, float64(foodRect.Min.X), float64(foodRect.Min.Y), float64(utils.GridSize), float64(utils.GridSize), utils.GetRedColor())
 
 	// Draw snake
 	for _, p := range g.snake {
-		snakeRect := image.Rect(p.X*gridSize, p.Y*gridSize, (p.X+1)*gridSize, (p.Y+1)*gridSize)
-		ebitenutil.DrawRect(screen, float64(snakeRect.Min.X), float64(snakeRect.Min.Y), float64(gridSize), float64(gridSize), color.RGBA{R: 0, G: 255, B: 0, A: 255})
+		snakeRect := image.Rect(p.X*utils.GridSize, p.Y*utils.GridSize, (p.X+1)*utils.GridSize, (p.Y+1)*utils.GridSize)
+		ebitenutil.DrawRect(screen, float64(snakeRect.Min.X), float64(snakeRect.Min.Y), float64(utils.GridSize), float64(utils.GridSize), utils.GetGreenColor())
 	}
 
 	// Draw score
-	text.Draw(screen, fmt.Sprintf("Score: %d", g.score), basicFont(), 10, 20, color.White)
+	text.Draw(screen, fmt.Sprintf("Score: %d", g.score), basicFont(), 10, 20, utils.GetWhiteColor())
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
-	return screenWidth, screenHeight
+	return utils.ScreenWidth, utils.ScreenHeight
 }
 
 func (g *Game) initGame() error {
 	g.snake = []Point{{X: 5, Y: 5}, {X: 4, Y: 5}, {X: 3, Y: 5}}
 	g.dir = Point{X: 1, Y: 0}
-	g.width = screenWidth / gridSize
-	g.height = screenHeight / gridSize
+	g.width = utils.ScreenWidth / utils.GridSize
+	g.height = utils.ScreenHeight / utils.GridSize
 	g.spawnFood()
 	g.score = 0
 	g.gameOver = false

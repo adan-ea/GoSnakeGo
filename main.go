@@ -1,8 +1,12 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"image"
+	_ "image/png"
+	"log"
+	//"math"
 	"math/rand"
 	"time"
 
@@ -12,6 +16,7 @@ import (
 	"golang.org/x/image/font"
 	"golang.org/x/image/font/basicfont"
 
+	"gosnakego/resources/images"
 	"gosnakego/utils"
 )
 
@@ -25,10 +30,37 @@ type Game struct {
 	score      int
 	bestScore  int
 	gameOver   bool
+	count      int
 }
+
+var (
+	frameOX     = 0
+	frameOY     = 0
+	frameWidth  = 32
+	frameHeight = 29
+	frameCount  = 6
+)
+
+var (
+	runnerImage *ebiten.Image
+)
 
 func init() {
 	rand.Seed(time.Now().UnixNano())
+}
+
+func HandleKeyPressed(g *Game) bool {
+	// Control snake
+	if (ebiten.IsKeyPressed(ebiten.KeyArrowUp) || ebiten.IsKeyPressed(ebiten.KeyW)) && g.dir.Y == 0 {
+		g.dir = utils.Up
+	} else if (ebiten.IsKeyPressed(ebiten.KeyArrowDown) || ebiten.IsKeyPressed(ebiten.KeyS)) && g.dir.Y == 0 {
+		g.dir = utils.Down
+	} else if (ebiten.IsKeyPressed(ebiten.KeyArrowLeft) || ebiten.IsKeyPressed(ebiten.KeyA)) && g.dir.X == 0 {
+		g.dir = utils.Left
+	} else if (ebiten.IsKeyPressed(ebiten.KeyArrowRight) || ebiten.IsKeyPressed(ebiten.KeyD)) && g.dir.X == 0 {
+		g.dir = utils.Right
+	}
+	return true
 }
 
 func (g *Game) Update() error {
@@ -39,8 +71,11 @@ func (g *Game) Update() error {
 		return nil
 	}
 
+	HandleKeyPressed(g)
+
 	g.updateTick++
-	if g.updateTick%10 != 0 {
+	g.count++
+	if g.updateTick%4 != 0 {
 		return nil
 	}
 
@@ -77,17 +112,6 @@ func (g *Game) Update() error {
 		}
 	}
 
-	// Control snake
-	if (ebiten.IsKeyPressed(ebiten.KeyArrowUp) || ebiten.IsKeyPressed(ebiten.KeyW)) && g.dir.Y == 0 {
-		g.dir = utils.Up
-	} else if (ebiten.IsKeyPressed(ebiten.KeyArrowDown) || ebiten.IsKeyPressed(ebiten.KeyS)) && g.dir.Y == 0 {
-		g.dir = utils.Down
-	} else if (ebiten.IsKeyPressed(ebiten.KeyArrowLeft) || ebiten.IsKeyPressed(ebiten.KeyA)) && g.dir.X == 0 {
-		g.dir = utils.Left
-	} else if (ebiten.IsKeyPressed(ebiten.KeyArrowRight) || ebiten.IsKeyPressed(ebiten.KeyD)) && g.dir.X == 0 {
-		g.dir = utils.Right
-	}
-
 	return nil
 }
 
@@ -107,13 +131,36 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	ebitenutil.DrawRect(screen, float64(foodRect.Min.X), float64(foodRect.Min.Y), float64(utils.GridSize), float64(utils.GridSize), utils.GetRedColor())
 
 	// Draw snake
-	for _, p := range g.snake {
+	for _, p := range g.snake[1:] {
 		snakeRect := image.Rect(p.X*utils.GridSize, p.Y*utils.GridSize, (p.X+1)*utils.GridSize, (p.Y+1)*utils.GridSize)
 		ebitenutil.DrawRect(screen, float64(snakeRect.Min.X), float64(snakeRect.Min.Y), float64(utils.GridSize), float64(utils.GridSize), utils.GetGreenColor())
 	}
 
 	// Draw score
 	text.Draw(screen, fmt.Sprintf("Score: %d, Best Score: %d", g.score, g.bestScore), basicFont(), 10, 20, utils.GetWhiteColor())
+
+	// Draw head
+	op := &ebiten.DrawImageOptions{}
+
+	// Translate to the center of the grid cell occupied by the snake head
+	op.GeoM.Translate(float64(g.snake[0].X*utils.GridSize)+utils.GridSize/2, float64(g.snake[0].Y*utils.GridSize)+utils.GridSize/2)
+
+	// Rotate the snake head based on its direction
+	switch g.dir {
+	case utils.Up:
+		op.GeoM.Rotate(2)
+	case utils.Down:
+		op.GeoM.Rotate(1)
+	case utils.Left:
+		op.GeoM.Invert()
+	}
+
+	// Translate to the center of the snake head image
+	op.GeoM.Translate(-float64(frameWidth)/2, -float64(frameHeight)/2)
+
+	i := (g.count / 5) % frameCount
+	sx, sy := frameOX+i*frameWidth, frameOY
+	screen.DrawImage(runnerImage.SubImage(image.Rect(sx, sy, sx+frameWidth, sy+frameHeight)).(*ebiten.Image), op)
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
@@ -157,6 +204,10 @@ func basicFont() font.Face {
 func main() {
 	game := &Game{}
 	game.initGame()
-
+	img, _, err := image.Decode(bytes.NewReader(images.Runner_png))
+	if err != nil {
+		log.Fatal(err)
+	}
+	runnerImage = ebiten.NewImageFromImage(img)
 	ebiten.RunGame(game)
 }

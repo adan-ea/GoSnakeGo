@@ -5,7 +5,12 @@ import (
 	"fmt"
 	"image"
 	_ "image/png"
+	"io/ioutil"
 	"log"
+	"os"
+	"sort"
+	"strconv"
+	"strings"
 
 	//"math"
 	"math/rand"
@@ -22,16 +27,17 @@ import (
 )
 
 type Game struct {
-	snake      []utils.Point
-	dir        utils.Point
-	food       utils.Point
-	width      int
-	height     int
-	updateTick int
-	score      int
-	bestScore  int
-	gameOver   bool
-	count      int
+	snake         []utils.Point
+	dir           utils.Point
+	food          utils.Point
+	width         int
+	height        int
+	updateTick    int
+	score         int
+	bestScore     int
+	gameOver      bool
+	count         int
+	scoreregister bool
 }
 
 var (
@@ -43,18 +49,25 @@ var (
 )
 
 var (
-	img         *ebiten.Image
-	runnerImage *ebiten.Image
+	img          *ebiten.Image
+	runnerImage  *ebiten.Image
+	file         *os.File
+	file_content string
 )
 
 func init() {
 	rand.Seed(time.Now().UnixNano())
+
 	var err error
 	imgb, _, err := image.Decode(bytes.NewReader(images.AdrienSexyy_png))
 	if err != nil {
 		log.Fatal(err)
 	}
 	img = ebiten.NewImageFromImage(imgb)
+
+	f, err := ioutil.ReadFile("resources/scoreboard.txt")
+	file_content = string(f)
+
 }
 
 func HandleKeyPressed(g *Game) bool {
@@ -73,6 +86,43 @@ func HandleKeyPressed(g *Game) bool {
 
 func (g *Game) Update() error {
 	if g.gameOver {
+		if g.scoreregister == false {
+			if g.score != 0 {
+				file_content += strconv.Itoa(g.score) + "\n"
+				scoresStr := strings.Split(file_content, "\n")
+
+				scores := make([]int, len(scoresStr))
+				for i, scoreStr := range scoresStr {
+					if scoreStr != "" {
+						score, err := strconv.Atoi(scoreStr)
+						if err != nil {
+							panic(err)
+						}
+						scores[i] = score
+					}
+				}
+
+				sort.Slice(scores, func(i, j int) bool {
+					return scores[i] > scores[j]
+				})
+
+				var fscores = make([]string, 3)
+				for i, score := range scores {
+					if i < 3 {
+						if score != 0 {
+							fscores[i] = strconv.Itoa(score)
+						}
+					}
+				}
+
+				file_content = strings.Join(fscores, "\n")
+				file_content += "\n"
+
+				ioutil.WriteFile("resources/scoreboard.txt", []byte(file_content), 0644)
+			}
+			g.scoreregister = true
+		}
+
 		if ebiten.IsKeyPressed(ebiten.KeySpace) {
 			g.initGame()
 		}
@@ -129,11 +179,15 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	if g.gameOver {
 		screen.DrawImage(img, nil)
 
+		lines := strings.Split(file_content, "\n")
+		firstThreeLines := lines[:3]
+
 		oneFifthHeight := utils.ScreenHeight / 8
 		// Dessiner le texte à la position calculée
 		text.Draw(screen, "Game Over", basicFont(), utils.ScreenWidth/2-25, oneFifthHeight, utils.GetBlackColor())
 		text.Draw(screen, fmt.Sprintf("Score: %d", g.score), basicFont(), utils.ScreenWidth/2-20, oneFifthHeight+20, utils.GetBlackColor())
 		text.Draw(screen, fmt.Sprintf("Best Score: %d", g.bestScore), basicFont(), utils.ScreenWidth/2-30, oneFifthHeight+40, utils.GetBlackColor())
+		text.Draw(screen, fmt.Sprintf("Scoreboard: %s", strings.Join(firstThreeLines, "\n")), basicFont(), utils.ScreenWidth/2-30, oneFifthHeight+40, utils.GetBlackColor())
 		text.Draw(screen, "Press SPACE to Restart", basicFont(), utils.ScreenWidth/2-80, oneFifthHeight+60, utils.GetBlackColor())
 
 		return
@@ -188,6 +242,7 @@ func (g *Game) initGame() error {
 	g.spawnFood()
 	g.score = 0
 	g.gameOver = false
+	g.scoreregister = false
 	return nil
 }
 

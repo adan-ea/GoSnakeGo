@@ -79,13 +79,13 @@ func (g *Game) Update() error {
 	}
 
 	// Control snake
-	if ebiten.IsKeyPressed(ebiten.KeyArrowUp) && g.dir.Y == 0 {
+	if (ebiten.IsKeyPressed(ebiten.KeyArrowUp) || ebiten.IsKeyPressed(ebiten.KeyW)) && g.dir.Y == 0 {
 		g.dir = Point{X: 0, Y: -1}
-	} else if ebiten.IsKeyPressed(ebiten.KeyArrowDown) && g.dir.Y == 0 {
+	} else if (ebiten.IsKeyPressed(ebiten.KeyArrowDown) || ebiten.IsKeyPressed(ebiten.KeyS)) && g.dir.Y == 0 {
 		g.dir = Point{X: 0, Y: 1}
-	} else if ebiten.IsKeyPressed(ebiten.KeyArrowLeft) && g.dir.X == 0 {
+	} else if (ebiten.IsKeyPressed(ebiten.KeyArrowLeft) || ebiten.IsKeyPressed(ebiten.KeyA)) && g.dir.X == 0 {
 		g.dir = Point{X: -1, Y: 0}
-	} else if ebiten.IsKeyPressed(ebiten.KeyArrowRight) && g.dir.X == 0 {
+	} else if (ebiten.IsKeyPressed(ebiten.KeyArrowRight) || ebiten.IsKeyPressed(ebiten.KeyD)) && g.dir.X == 0 {
 		g.dir = Point{X: 1, Y: 0}
 	}
 

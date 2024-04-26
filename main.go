@@ -50,7 +50,7 @@ var (
 func init() {
 	rand.Seed(time.Now().UnixNano())
 	var err error
-	img, _, err = ebitenutil.NewImageFromFile("assets/adriensexyy.png")
+	img, _, err = ebitenutil.NewImageFromFile("resources/images/adriensexyy.png")
 	if err != nil {
 		log.Fatal(err)
 	}

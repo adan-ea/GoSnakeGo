@@ -23,6 +23,7 @@ type Game struct {
 	height     int
 	updateTick int
 	score      int
+	bestScore  int
 	gameOver   bool
 }
 
@@ -71,6 +72,10 @@ func (g *Game) Update() error {
 		g.snake = append(g.snake, g.food)
 		g.spawnFood()
 		g.score++
+
+		if g.score > g.bestScore {
+			g.bestScore = g.score
+		}
 	}
 
 	// Control snake
@@ -93,7 +98,8 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	if g.gameOver {
 		text.Draw(screen, "Game Over", basicFont(), utils.ScreenWidth/2-25, utils.ScreenHeight/2, utils.GetWhiteColor())
 		text.Draw(screen, fmt.Sprintf("Score: %d", g.score), basicFont(), utils.ScreenWidth/2-20, utils.ScreenHeight/2+20, utils.GetWhiteColor())
-		text.Draw(screen, "Press SPACE to Restart", basicFont(), utils.ScreenWidth/2-80, utils.ScreenHeight/2+40, utils.GetWhiteColor())
+		text.Draw(screen, fmt.Sprintf("Best Score: %d", g.bestScore), basicFont(), utils.ScreenWidth/2-30, utils.ScreenHeight/2+40, utils.GetWhiteColor())
+		text.Draw(screen, "Press SPACE to Restart", basicFont(), utils.ScreenWidth/2-80, utils.ScreenHeight/2+60, utils.GetWhiteColor())
 		return
 	}
 
@@ -108,7 +114,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	}
 
 	// Draw score
-	text.Draw(screen, fmt.Sprintf("Score: %d", g.score), basicFont(), 10, 20, utils.GetWhiteColor())
+	text.Draw(screen, fmt.Sprintf("Score: %d, Best Score: %d", g.score, g.bestScore), basicFont(), 10, 20, utils.GetWhiteColor())
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {

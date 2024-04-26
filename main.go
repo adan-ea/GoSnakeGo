@@ -181,12 +181,15 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	if g.gameOver {
 		screen.DrawImage(img, nil)
 
+		lines := strings.Split(file_content, "\n")
+		firstThreeLines := lines[:3]
+
 		oneFifthHeight := utils.ScreenHeight / 8
 		// Dessiner le texte à la position calculée
 		text.Draw(screen, "Game Over", basicFont(), utils.ScreenWidth/2-25, oneFifthHeight, utils.GetBlackColor())
 		text.Draw(screen, fmt.Sprintf("Score: %d", g.score), basicFont(), utils.ScreenWidth/2-20, oneFifthHeight+20, utils.GetBlackColor())
 		text.Draw(screen, fmt.Sprintf("Best Score: %d", g.bestScore), basicFont(), utils.ScreenWidth/2-30, oneFifthHeight+40, utils.GetBlackColor())
-		text.Draw(screen, fmt.Sprintf("Scoreboard: %s", file_content), basicFont(), utils.ScreenWidth/2-30, oneFifthHeight+40, utils.GetBlackColor())
+		text.Draw(screen, fmt.Sprintf("Scoreboard: %s", strings.Join(firstThreeLines, "\n")), basicFont(), utils.ScreenWidth/2-30, oneFifthHeight+40, utils.GetBlackColor())
 		text.Draw(screen, "Press SPACE to Restart", basicFont(), utils.ScreenWidth/2-80, oneFifthHeight+60, utils.GetBlackColor())
 
 		return

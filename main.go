@@ -16,19 +16,15 @@ import (
 )
 
 type Game struct {
-	snake      []Point
-	dir        Point
-	food       Point
+	snake      []utils.Point
+	dir        utils.Point
+	food       utils.Point
 	width      int
 	height     int
 	updateTick int
 	score      int
 	bestScore  int
 	gameOver   bool
-}
-
-type Point struct {
-	X, Y int
 }
 
 func init() {
@@ -45,7 +41,7 @@ func (g *Game) Update() error {
 		return nil
 	}
 
-	newHead := Point{
+	newHead := utils.Point{
 		X: g.snake[0].X + g.dir.X,
 		Y: g.snake[0].Y + g.dir.Y,
 	}
@@ -65,7 +61,7 @@ func (g *Game) Update() error {
 	}
 
 	// Move snake
-	g.snake = append([]Point{newHead}, g.snake[:len(g.snake)-1]...)
+	g.snake = append([]utils.Point{newHead}, g.snake[:len(g.snake)-1]...)
 
 	// Eating food
 	if newHead == g.food {
@@ -80,13 +76,13 @@ func (g *Game) Update() error {
 
 	// Control snake
 	if (ebiten.IsKeyPressed(ebiten.KeyArrowUp) || ebiten.IsKeyPressed(ebiten.KeyW)) && g.dir.Y == 0 {
-		g.dir = Point{X: 0, Y: -1}
+		g.dir = utils.Up
 	} else if (ebiten.IsKeyPressed(ebiten.KeyArrowDown) || ebiten.IsKeyPressed(ebiten.KeyS)) && g.dir.Y == 0 {
-		g.dir = Point{X: 0, Y: 1}
+		g.dir = utils.Down
 	} else if (ebiten.IsKeyPressed(ebiten.KeyArrowLeft) || ebiten.IsKeyPressed(ebiten.KeyA)) && g.dir.X == 0 {
-		g.dir = Point{X: -1, Y: 0}
+		g.dir = utils.Left
 	} else if (ebiten.IsKeyPressed(ebiten.KeyArrowRight) || ebiten.IsKeyPressed(ebiten.KeyD)) && g.dir.X == 0 {
-		g.dir = Point{X: 1, Y: 0}
+		g.dir = utils.Right
 	}
 
 	return nil
@@ -122,8 +118,8 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
 }
 
 func (g *Game) initGame() error {
-	g.snake = []Point{{X: 5, Y: 5}, {X: 4, Y: 5}, {X: 3, Y: 5}}
-	g.dir = Point{X: 1, Y: 0}
+	g.snake = []utils.Point{{X: 5, Y: 5}, {X: 4, Y: 5}, {X: 3, Y: 5}}
+	g.dir = utils.Right
 	g.width = utils.ScreenWidth / utils.GridSize
 	g.height = utils.ScreenHeight / utils.GridSize
 	g.spawnFood()
@@ -144,7 +140,7 @@ func (g *Game) spawnFood() {
 			}
 		}
 		if !occupied {
-			g.food = Point{X: x, Y: y}
+			g.food = utils.Point{X: x, Y: y}
 			break
 		}
 	}

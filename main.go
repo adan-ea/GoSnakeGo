@@ -24,6 +24,8 @@ import (
 
 	"gosnakego/resources/images"
 	"gosnakego/utils"
+	// "github.com/hajimehoshi/ebiten/v2/audio"
+	// "github.com/hajimehoshi/ebiten/v2/audio/mp3"
 )
 
 type Game struct {
@@ -49,10 +51,11 @@ var (
 )
 
 var (
-	img          *ebiten.Image
-	runnerImage  *ebiten.Image
-	file         *os.File
-	file_content string
+	img             *ebiten.Image
+	runnerImage     *ebiten.Image
+	file            *os.File
+	file_content    string
+	player_gameover *audio.player
 )
 
 func init() {
@@ -67,6 +70,29 @@ func init() {
 
 	f, err := ioutil.ReadFile("resources/scoreboard.txt")
 	file_content = string(f)
+
+	audioContext, err := audio.NewContext(44100)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	file, err := os.Open("resources/alexissexyy.mp3")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer file.Close()
+
+	streamer, err := mp3.Decode(audioContext, file)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer streamer.Close()
+
+	player, err := audio.NewPlayer(audioContext, streamer)
+	if err != nil {
+		log.Fatal(err)
+	}
+	player_gameover = player
 
 }
 
@@ -189,6 +215,8 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		text.Draw(screen, fmt.Sprintf("Best Score: %d", g.bestScore), basicFont(), utils.ScreenWidth/2-30, oneFifthHeight+40, utils.GetBlackColor())
 		text.Draw(screen, fmt.Sprintf("Scoreboard: %s", strings.Join(firstThreeLines, "\n")), basicFont(), utils.ScreenWidth/2-30, oneFifthHeight+40, utils.GetBlackColor())
 		text.Draw(screen, "Press SPACE to Restart", basicFont(), utils.ScreenWidth/2-80, oneFifthHeight+60, utils.GetBlackColor())
+
+		player_gameover.Play()
 
 		return
 	}

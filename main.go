@@ -8,7 +8,9 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"sort"
 	"strconv"
+	"strings"
 
 	//"math"
 	"math/rand"
@@ -86,20 +88,39 @@ func (g *Game) Update() error {
 	if g.gameOver {
 		if g.scoreregister == false {
 			if g.score != 0 {
-
-				// var _, err = file.Seek(0, 2)
-				// if err != nil {
-				// 	panic(err)
-				// }
-
-				// _, err = file.WriteString(strconv.Itoa(g.score))
-				// if err != nil {
-				// 	panic(err)
-				// }
 				file_content += strconv.Itoa(g.score) + "\n"
-				fmt.Println(file_content)
-				ioutil.WriteFile("resources/scoreboard.txt", []byte(file_content), 0644)
 
+				scoresStr := strings.Split(file_content, "\n")
+
+				scores := make([]int, len(scoresStr))
+				for i, scoreStr := range scoresStr {
+					fmt.Println(scoreStr)
+					if scoreStr != "" {
+						score, err := strconv.Atoi(scoreStr)
+						if err != nil {
+							panic(err)
+						}
+						scores[i] = score
+					}
+				}
+
+				// Trier les scores en ordre décroissant
+				sort.Slice(scores, func(i, j int) bool {
+					return scores[i] > scores[j]
+				})
+
+				// Convertir les scores triés en chaînes
+				for i, score := range scores {
+					if score != 0 {
+						scoresStr[i] = strconv.Itoa(score)
+					}
+				}
+
+				// Joindre les scores avec des sauts de ligne
+				file_content = strings.Join(scoresStr, "\n")
+				file_content += "\n"
+
+				ioutil.WriteFile("resources/scoreboard.txt", []byte(file_content), 0644)
 			}
 			g.scoreregister = true
 		}
@@ -165,6 +186,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		text.Draw(screen, "Game Over", basicFont(), utils.ScreenWidth/2-25, oneFifthHeight, utils.GetBlackColor())
 		text.Draw(screen, fmt.Sprintf("Score: %d", g.score), basicFont(), utils.ScreenWidth/2-20, oneFifthHeight+20, utils.GetBlackColor())
 		text.Draw(screen, fmt.Sprintf("Best Score: %d", g.bestScore), basicFont(), utils.ScreenWidth/2-30, oneFifthHeight+40, utils.GetBlackColor())
+		text.Draw(screen, fmt.Sprintf("Scoreboard: %s", file_content), basicFont(), utils.ScreenWidth/2-30, oneFifthHeight+40, utils.GetBlackColor())
 		text.Draw(screen, "Press SPACE to Restart", basicFont(), utils.ScreenWidth/2-80, oneFifthHeight+60, utils.GetBlackColor())
 
 		return

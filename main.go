@@ -5,7 +5,10 @@ import (
 	"fmt"
 	"image"
 	_ "image/png"
+	"io/ioutil"
 	"log"
+	"os"
+	"strconv"
 
 	//"math"
 	"math/rand"
@@ -22,16 +25,17 @@ import (
 )
 
 type Game struct {
-	snake      []utils.Point
-	dir        utils.Point
-	food       utils.Point
-	width      int
-	height     int
-	updateTick int
-	score      int
-	bestScore  int
-	gameOver   bool
-	count      int
+	snake         []utils.Point
+	dir           utils.Point
+	food          utils.Point
+	width         int
+	height        int
+	updateTick    int
+	score         int
+	bestScore     int
+	gameOver      bool
+	count         int
+	scoreregister bool
 }
 
 var (
@@ -43,18 +47,25 @@ var (
 )
 
 var (
-	img         *ebiten.Image
-	runnerImage *ebiten.Image
+	img          *ebiten.Image
+	runnerImage  *ebiten.Image
+	file         *os.File
+	file_content string
 )
 
 func init() {
 	rand.Seed(time.Now().UnixNano())
+
 	var err error
 	imgb, _, err := image.Decode(bytes.NewReader(images.AdrienSexyy_png))
 	if err != nil {
 		log.Fatal(err)
 	}
 	img = ebiten.NewImageFromImage(imgb)
+
+	f, err := ioutil.ReadFile("resources/scoreboard.txt")
+	file_content = string(f)
+
 }
 
 func HandleKeyPressed(g *Game) bool {
@@ -73,6 +84,26 @@ func HandleKeyPressed(g *Game) bool {
 
 func (g *Game) Update() error {
 	if g.gameOver {
+		if g.scoreregister == false {
+			if g.score != 0 {
+
+				// var _, err = file.Seek(0, 2)
+				// if err != nil {
+				// 	panic(err)
+				// }
+
+				// _, err = file.WriteString(strconv.Itoa(g.score))
+				// if err != nil {
+				// 	panic(err)
+				// }
+				file_content += strconv.Itoa(g.score) + "\n"
+				fmt.Println(file_content)
+				ioutil.WriteFile("resources/scoreboard.txt", []byte(file_content), 0644)
+
+			}
+			g.scoreregister = true
+		}
+
 		if ebiten.IsKeyPressed(ebiten.KeySpace) {
 			g.initGame()
 		}
@@ -188,6 +219,7 @@ func (g *Game) initGame() error {
 	g.spawnFood()
 	g.score = 0
 	g.gameOver = false
+	g.scoreregister = false
 	return nil
 }
 

@@ -8,7 +8,7 @@ import (
 // Game Sprites
 const (
 	BackgroundImagePath = "resources/images/board/background_brown.png"
-	GameOverImagePath   = "resources/images/adriensexyy.png"
+	GameOverImagePath   = "resources/images/ui/adriensexyy.png"
 )
 
 // Snake Sprites
@@ -34,10 +34,32 @@ var (
 	DigitWidths = []int{22, 18, 21, 22, 24, 22, 23, 21, 23, 22}
 )
 
+var (
+	BackgroundSprite *ebiten.Image
+	GameOverSprite   *ebiten.Image
+	HeadSprite       *ebiten.Image
+	BodySprite       *ebiten.Image
+	TailSprite       *ebiten.Image
+	FoodSprite       *ebiten.Image
+	NumbersSprite    *ebiten.Image
+	StarSprite       *ebiten.Image
+)
+
 func LoadImage(path string) *ebiten.Image {
 	img, _, err := ebitenutil.NewImageFromFile(path)
 	if err != nil {
 		panic(err)
 	}
 	return img
+}
+
+func LoadImages() {
+	BackgroundSprite = LoadImage(BackgroundImagePath)
+	GameOverSprite = LoadImage(GameOverImagePath)
+	HeadSprite = LoadImage(HeadSpriteLeftPath)
+	BodySprite = LoadImage(BodySpritePath)
+	TailSprite = LoadImage(TailSpritePath)
+	FoodSprite = LoadImage(FoodSpritePath)
+	NumbersSprite = LoadImage(NumbersSpritePath)
+	StarSprite = LoadImage(StarSpritePath)
 }

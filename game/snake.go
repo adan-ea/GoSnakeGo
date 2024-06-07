@@ -24,39 +24,34 @@ const (
 type Snake struct {
 	Body          []Point
 	Direction     Direction
+	justAte       bool
 	currentFrame  int
 	lastFrameTime time.Time
-	headSprite    *ebiten.Image
-	bodySprite    *ebiten.Image
-	tailSprite    *ebiten.Image
 }
 
-// initSnake creates a new instance of Snake
-func initSnake() *Snake {
-	snake := &Snake{
+// NewSnake creates a new snake with the given body and direction
+func NewSnake() *Snake {
+	return &Snake{
 		Body: []Point{
-			{X: 3, Y: 1},
-			{X: 2, Y: 1},
-			{X: 1, Y: 1}},
+			{x: 3, y: 1},
+			{x: 2, y: 1},
+			{x: 1, y: 1}},
 		Direction:     Right,
 		currentFrame:  0,
 		lastFrameTime: time.Now(),
 	}
-	snake.headSprite = images.LoadImage(images.HeadSpriteLeftPath)
-	snake.bodySprite = images.LoadImage(images.BodySpritePath)
-	snake.tailSprite = images.LoadImage(images.TailSpritePath)
-
-	return snake
 }
 
-func (s *Snake) Update() {
-	// Update the animation frame
-	if time.Since(s.lastFrameTime) >= frameDelay {
-		s.currentFrame = (s.currentFrame + 1) % frameCount
-		s.lastFrameTime = time.Now()
-	}
+// Returns the position of the snake's head
+func (s *Snake) Head() Point {
+	return s.Body[0]
+}
 
-	s.MoveSnake()
+// HeadHits checks if the snake's head is at the given position
+func (s *Snake) HeadHits(x, y int) bool {
+	h := s.Head()
+
+	return h.x == x && h.y == y
 }
 
 // MoveSnake moves the snake one step in its current direction
@@ -67,13 +62,13 @@ func (s *Snake) MoveSnake() error {
 	// Calculate the new position of the head based on the direction
 	switch s.Direction {
 	case Up:
-		newHead.Y--
+		newHead.y--
 	case Down:
-		newHead.Y++
+		newHead.y++
 	case Left:
-		newHead.X--
+		newHead.x--
 	case Right:
-		newHead.X++
+		newHead.x++
 	}
 	// Move each segment of the snake's body to the position of the segment in front of it
 	for i := len(s.Body) - 1; i > 0; i-- {
@@ -109,8 +104,8 @@ func (s *Snake) Draw(screen *ebiten.Image) {
 	// Draw the snake's body and tail first
 	for i := len(s.Body) - 1; i >= 0; i-- {
 		part := s.Body[i]
-		sx := float64(offsetX + part.X*constants.TileSize)
-		sy := float64(offsetY + part.Y*constants.TileSize)
+		sx := float64(offsetX + part.x*constants.TileSize)
+		sy := float64(offsetY + part.y*constants.TileSize)
 
 		switch {
 		case i == 0:
@@ -139,7 +134,7 @@ func (s *Snake) handleHead(screen *ebiten.Image, sx, sy float64) {
 		frameY = 0 * headHeight
 	}
 
-	headImage := s.headSprite.SubImage(image.Rect(frameX, frameY, frameX+headWidth, frameY+headHeight)).(*ebiten.Image)
+	headImage := images.HeadSprite.SubImage(image.Rect(frameX, frameY, frameX+headWidth, frameY+headHeight)).(*ebiten.Image)
 	headOp := &ebiten.DrawImageOptions{}
 	headOp.GeoM.Translate(sx, sy)
 	screen.DrawImage(headImage, headOp)
@@ -154,27 +149,27 @@ func (s *Snake) handleBody(screen *ebiten.Image, sx, sy float64, i int) {
 	var bodyImage *ebiten.Image
 	switch {
 	// Vertical
-	case prev.X == next.X:
-		bodyImage = s.bodySprite.SubImage(image.Rect(frameWidth, 0, 2*frameWidth, frameHeight)).(*ebiten.Image)
+	case prev.x == next.x:
+		bodyImage = images.BodySprite.SubImage(image.Rect(frameWidth, 0, 2*frameWidth, frameHeight)).(*ebiten.Image)
 	// Horizontal
-	case prev.Y == next.Y:
-		bodyImage = s.bodySprite.SubImage(image.Rect(0, 0, frameWidth, frameHeight)).(*ebiten.Image)
+	case prev.y == next.y:
+		bodyImage = images.BodySprite.SubImage(image.Rect(0, 0, frameWidth, frameHeight)).(*ebiten.Image)
 
 	// Top left corner
-	case (prev.X > curr.X && next.Y < curr.Y) || (next.X > curr.X && prev.Y < curr.Y):
-		bodyImage = s.bodySprite.SubImage(image.Rect(4*frameWidth, 0, 5*frameWidth, frameHeight)).(*ebiten.Image)
+	case (prev.x > curr.x && next.y < curr.y) || (next.x > curr.x && prev.y < curr.y):
+		bodyImage = images.BodySprite.SubImage(image.Rect(4*frameWidth, 0, 5*frameWidth, frameHeight)).(*ebiten.Image)
 
 	// Top right corner
-	case (prev.X < curr.X && next.Y < curr.Y) || (next.X < curr.X && prev.Y < curr.Y):
-		bodyImage = s.bodySprite.SubImage(image.Rect(5*frameWidth, 0, 6*frameWidth, frameHeight)).(*ebiten.Image)
+	case (prev.x < curr.x && next.y < curr.y) || (next.x < curr.x && prev.y < curr.y):
+		bodyImage = images.BodySprite.SubImage(image.Rect(5*frameWidth, 0, 6*frameWidth, frameHeight)).(*ebiten.Image)
 
 	// Bottom right corner
-	case (prev.X < curr.X && next.Y > curr.Y) || (next.X < curr.X && prev.Y > curr.Y):
-		bodyImage = s.bodySprite.SubImage(image.Rect(3*frameWidth, 0, 4*frameWidth, frameHeight)).(*ebiten.Image)
+	case (prev.x < curr.x && next.y > curr.y) || (next.x < curr.x && prev.y > curr.y):
+		bodyImage = images.BodySprite.SubImage(image.Rect(3*frameWidth, 0, 4*frameWidth, frameHeight)).(*ebiten.Image)
 
 	// Bottom left corner
-	case (prev.X > curr.X && next.Y > curr.Y) || (next.X > curr.X && prev.Y > curr.Y):
-		bodyImage = s.bodySprite.SubImage(image.Rect(2*frameWidth, 0, 3*frameWidth, frameHeight)).(*ebiten.Image)
+	case (prev.x > curr.x && next.y > curr.y) || (next.x > curr.x && prev.y > curr.y):
+		bodyImage = images.BodySprite.SubImage(image.Rect(2*frameWidth, 0, 3*frameWidth, frameHeight)).(*ebiten.Image)
 	}
 
 	bodyOp := &ebiten.DrawImageOptions{}
@@ -189,22 +184,17 @@ func (s *Snake) handleTail(screen *ebiten.Image, sx, sy float64, i int) {
 
 	var tailImage *ebiten.Image
 	switch {
-	case tail.X > prev.X: // Going left
-		tailImage = s.tailSprite.SubImage(image.Rect(3*frameWidth, 0, 4*frameWidth, frameHeight)).(*ebiten.Image)
-	case tail.X < prev.X: // Going right
-		tailImage = s.tailSprite.SubImage(image.Rect(0, 0, frameWidth, frameHeight)).(*ebiten.Image)
-	case tail.Y > prev.Y: // Going up
-		tailImage = s.tailSprite.SubImage(image.Rect(2*frameWidth, 0, 3*frameWidth, frameHeight)).(*ebiten.Image)
-	case tail.Y < prev.Y: // Going down
-		tailImage = s.tailSprite.SubImage(image.Rect(frameWidth, 0, 2*frameWidth, frameHeight)).(*ebiten.Image)
+	case tail.x > prev.x: // Going left
+		tailImage = images.TailSprite.SubImage(image.Rect(3*frameWidth, 0, 4*frameWidth, frameHeight)).(*ebiten.Image)
+	case tail.x < prev.x: // Going right
+		tailImage = images.TailSprite.SubImage(image.Rect(0, 0, frameWidth, frameHeight)).(*ebiten.Image)
+	case tail.y > prev.y: // Going up
+		tailImage = images.TailSprite.SubImage(image.Rect(2*frameWidth, 0, 3*frameWidth, frameHeight)).(*ebiten.Image)
+	case tail.y < prev.y: // Going down
+		tailImage = images.TailSprite.SubImage(image.Rect(frameWidth, 0, 2*frameWidth, frameHeight)).(*ebiten.Image)
 	}
 
 	tailOp := &ebiten.DrawImageOptions{}
 	tailOp.GeoM.Translate(sx, sy)
 	screen.DrawImage(tailImage, tailOp)
-}
-
-// Returns the position of the snake's head
-func (s *Snake) getHead() Point {
-	return s.Body[0]
 }

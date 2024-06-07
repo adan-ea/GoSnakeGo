@@ -30,7 +30,7 @@ func (g *Game) DrawScoreWithSprite(screen *ebiten.Image, sprite *ebiten.Image, s
 			sx += images.DigitWidths[j]
 		}
 		sy := 0
-		numImage := g.numberSprite.SubImage(image.Rect(sx, sy, sx+digitWidth, sy+images.DigitHeight)).(*ebiten.Image)
+		numImage := images.NumbersSprite.SubImage(image.Rect(sx, sy, sx+digitWidth, sy+images.DigitHeight)).(*ebiten.Image)
 
 		op := &ebiten.DrawImageOptions{}
 		op.GeoM.Translate(float64(currentX), float64(y))
@@ -41,11 +41,11 @@ func (g *Game) DrawScoreWithSprite(screen *ebiten.Image, sprite *ebiten.Image, s
 }
 
 func (g *Game) drawScore(screen *ebiten.Image, score int, x, y int) {
-	g.DrawScoreWithSprite(screen, g.food.Sprite, score, x, y)
+	g.DrawScoreWithSprite(screen, images.FoodSprite, score, x, y)
 }
 
 func (g *Game) drawHighScore(screen *ebiten.Image, score int, x, y int) {
-	g.DrawScoreWithSprite(screen, g.starSprite, score, x, y)
+	g.DrawScoreWithSprite(screen, images.StarSprite, score, x, y)
 }
 
 // saveHighScore saves the score along with the current date and time to the scoreboard file

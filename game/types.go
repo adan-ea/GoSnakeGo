@@ -11,7 +11,7 @@ const (
 
 // Point represents a point in 2D space
 type Point struct {
-	X, Y int
+	x, y int
 }
 
 // Direction represents the direction of the snake's movement

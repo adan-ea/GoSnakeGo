@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"log"
+	"math/rand"
 
 	"github.com/adan-ea/GoSnakeGo/constants"
 	raudio "github.com/adan-ea/GoSnakeGo/resources/audio"
@@ -33,14 +34,11 @@ type Game struct {
 	highScore  int
 	updateTick int
 
-	backgroundSprite *ebiten.Image
-	numberSprite     *ebiten.Image
-	starSprite       *ebiten.Image
-	audioContext     *audio.Context
-	hitPlayer        *audio.Player
-	eatPlayer        *audio.Player
-	gameOverPlayer   *audio.Player
-	themePlayer      *audio.Player
+	audioContext   *audio.Context
+	hitPlayer      *audio.Player
+	eatPlayer      *audio.Player
+	gameOverPlayer *audio.Player
+	themePlayer    *audio.Player
 }
 
 func NewGame() *Game {
@@ -49,19 +47,31 @@ func NewGame() *Game {
 
 // Init initializes the game state
 func (g *Game) Init() {
+	images.LoadImages()
+	g.initAudio()
 
-	g.snake = initSnake()
-	g.food = spawnFood(g.snake.Body)
+	g.snake = NewSnake()
+	g.placeFood()
 	g.score = 0
 	g.highScore = getHighestScore()
 	g.updateTick = 0
 
-	g.backgroundSprite = images.LoadImage(images.BackgroundImagePath)
-	g.numberSprite = images.LoadImage(images.NumbersSpritePath)
-	g.starSprite = images.LoadImage(images.StarSpritePath)
+}
 
-	g.initAudio()
+func (g *Game) placeFood() {
+	var x, y int
 
+	for {
+		x = rand.Intn((constants.GameWidth / constants.TileSize))
+		y = rand.Intn((constants.GameWidth / constants.TileSize))
+
+		// make sure we don't put a food on a snake
+		if !g.snake.HeadHits(x, y) {
+			break
+		}
+	}
+
+	g.food = NewFood(x, y)
 }
 
 // initAudio initializes the audio context and players
@@ -140,7 +150,7 @@ func (g *Game) Update() error {
 			return nil
 		}
 
-		g.snake.Update()
+		g.snake.MoveSnake()
 
 		// Check for game over state
 		if g.isGameOver() {
@@ -170,23 +180,23 @@ func (g *Game) Update() error {
 // looks if the snake ate an apple and updates the score
 func (g *Game) eatApple() {
 	// Eating food
-	if g.snake.getHead() == g.food.getFoodPosition() {
+	if g.snake.Head() == g.food.getFoodPosition() {
 		if err := g.eatPlayer.Rewind(); err != nil {
 			return
 		}
 		g.eatPlayer.Play()
 		g.snake.Body = append(g.snake.Body, g.food.getFoodPosition())
-		g.food.changePosition(g.snake.Body)
+		g.placeFood()
 		g.updateScore()
 	}
 }
 
 // Add a method to check if the game is over
 func (g *Game) isGameOver() bool {
-	head := g.snake.getHead()
+	head := g.snake.Head()
 	// Check if the snake has collided with the walls
-	if head.X < 0 || head.X >= constants.GameWidth/constants.TileSize ||
-		head.Y < 0 || head.Y >= constants.GameHeight/constants.TileSize {
+	if head.x < 0 || head.x >= constants.GameWidth/constants.TileSize ||
+		head.y < 0 || head.y >= constants.GameHeight/constants.TileSize {
 		return true
 	}
 
@@ -214,7 +224,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 			for x := 0; x < constants.GameWidth; x += constants.TileSize * 2 {
 				op.GeoM.Reset()
 				op.GeoM.Translate(float64(x+offsetX), float64(y+offsetY))
-				screen.DrawImage(g.backgroundSprite, op)
+				screen.DrawImage(images.BackgroundSprite, op)
 			}
 		}
 

@@ -17,35 +17,33 @@ const (
 	headWidth    = 40
 	headHeight   = 40
 	frameCount   = 6
-	frameDelay   = 100 // Delay between frames
+	frameDelay   = 50 // Delay between frames
 )
 
 // Snake represents the snake
 type Snake struct {
-	Body          []Point
-	Direction     Direction
-	justAte       bool
-	currentFrame  int
-	lastFrameTime time.Time
+	body             []Point
+	direction        Direction
+	justAte          bool
+	changedDirection bool
+	currentFrame     int
+	lastFrameTime    time.Time
 }
 
 // NewSnake creates a new snake with the given body and direction
 func NewSnake() *Snake {
 	return &Snake{
-		Body: []Point{
-			{x: 0, y: 1},
+		body: []Point{
 			{x: 1, y: 1},
 			{x: 2, y: 1},
 			{x: 3, y: 1}},
-		Direction:     Right,
-		currentFrame:  0,
 		lastFrameTime: time.Now(),
 	}
 }
 
 // Returns the position of the snake's head
 func (s *Snake) Head() Point {
-	return s.Body[len(s.Body)-1]
+	return s.body[len(s.body)-1]
 }
 
 func (s *Snake) ChangeDirection(newDir Direction) {
@@ -55,10 +53,12 @@ func (s *Snake) ChangeDirection(newDir Direction) {
 		Down:  Up,
 		Left:  Right,
 	}
-
-	// Prevent the snake from reversing direction
-	if o, ok := opposites[newDir]; ok && o != s.Direction {
-		s.Direction = newDir
+	if !s.changedDirection {
+		// Prevent the snake from reversing direction
+		if o, ok := opposites[newDir]; ok && o != s.direction {
+			s.direction = newDir
+			s.changedDirection = true
+		}
 	}
 }
 
@@ -71,7 +71,7 @@ func (s *Snake) HeadHits(x, y int) bool {
 
 func (s *Snake) HeadHitsBody() bool {
 	h := s.Head()
-	bodyWithoutHead := s.Body[:len(s.Body)-1]
+	bodyWithoutHead := s.body[:len(s.body)-1]
 
 	for _, b := range bodyWithoutHead {
 		if b.x == h.x && b.y == h.y {
@@ -84,11 +84,12 @@ func (s *Snake) HeadHitsBody() bool {
 
 // Move moves the snake one step in its current direction
 func (s *Snake) Move() {
+	s.changedDirection = false
 	// Create a copy of the head position to avoid modifying the original directly
 	h := s.Head()
 	newHead := Point{x: h.x, y: h.y}
 	// Calculate the new position of the head based on the direction
-	switch s.Direction {
+	switch s.direction {
 	case Up:
 		newHead.y--
 	case Down:
@@ -100,10 +101,10 @@ func (s *Snake) Move() {
 	}
 
 	if s.justAte {
-		s.Body = append(s.Body, newHead)
+		s.body = append(s.body, newHead)
 		s.justAte = false
 	} else {
-		s.Body = append(s.Body[1:], newHead)
+		s.body = append(s.body[1:], newHead)
 	}
 }
 
@@ -112,17 +113,17 @@ func (s *Snake) Draw(screen *ebiten.Image) {
 	// Calculate the offset to center the game area
 	offsetX := (constants.ScreenWidth - constants.GameWidth) / 2
 	offsetY := (constants.ScreenHeight - constants.GameHeight) / 2
-
+	s.UpdateAnimation()
 	// Draw the snake's body and tail first
-	for i := 0; i < len(s.Body); i++ {
-		part := s.Body[i]
+	for i := 0; i < len(s.body); i++ {
+		part := s.body[i]
 		sx := float64(offsetX + part.x*constants.TileSize)
 		sy := float64(offsetY + part.y*constants.TileSize)
 
 		switch {
 		case i == 0:
 			s.handleTail(screen, sx, sy, i)
-		case i == len(s.Body)-1:
+		case i == len(s.body)-1:
 			s.handleHead(screen, sx, sy)
 		default:
 			s.handleBody(screen, sx, sy, i)
@@ -135,7 +136,7 @@ func (s *Snake) handleHead(screen *ebiten.Image, sx, sy float64) {
 	frameX := s.currentFrame * headWidth
 	var frameY int
 
-	switch s.Direction {
+	switch s.direction {
 	case Up:
 		frameY = 1 * headHeight
 	case Down:
@@ -154,9 +155,9 @@ func (s *Snake) handleHead(screen *ebiten.Image, sx, sy float64) {
 
 // handleBody draws the snake's body
 func (s *Snake) handleBody(screen *ebiten.Image, sx, sy float64, i int) {
-	prev := s.Body[i-1]
-	curr := s.Body[i]
-	next := s.Body[i+1]
+	prev := s.body[i-1]
+	curr := s.body[i]
+	next := s.body[i+1]
 
 	var bodyImage *ebiten.Image
 	switch {
@@ -191,8 +192,8 @@ func (s *Snake) handleBody(screen *ebiten.Image, sx, sy float64, i int) {
 
 // handleTail draws the snake's tail
 func (s *Snake) handleTail(screen *ebiten.Image, sx, sy float64, i int) {
-	tail := s.Body[i]
-	prev := s.Body[i+1]
+	tail := s.body[i]
+	prev := s.body[i+1]
 
 	var tailImage *ebiten.Image
 	switch {
@@ -209,4 +210,12 @@ func (s *Snake) handleTail(screen *ebiten.Image, sx, sy float64, i int) {
 	tailOp := &ebiten.DrawImageOptions{}
 	tailOp.GeoM.Translate(sx, sy)
 	screen.DrawImage(tailImage, tailOp)
+}
+
+// UpdateAnimation updates the snake's animation frame
+func (s *Snake) UpdateAnimation() {
+	if time.Since(s.lastFrameTime) >= time.Millisecond*frameDelay {
+		s.currentFrame = (s.currentFrame + 1) % frameCount
+		s.lastFrameTime = time.Now()
+	}
 }

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"image"
 	"log"
 
 	"github.com/adan-ea/GoSnakeGo/constants"
@@ -14,7 +15,8 @@ func main() {
 	g := game.NewGame(18, 18)
 
 	ebiten.SetWindowSize(constants.ScreenWidth, constants.ScreenHeight)
-	ebiten.SetWindowTitle("Snake Game")
+	ebiten.SetWindowIcon([]image.Image{images.IconSprite})
+	ebiten.SetWindowTitle("Go Snake Go!")
 	if err := ebiten.RunGame(g); err != nil {
 		log.Fatal(err)
 	}

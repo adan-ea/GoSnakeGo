@@ -14,8 +14,8 @@ const (
 // Snake Sprites
 const (
 	HeadSpriteLeftPath = "resources/images/snake/head_sprite.png"
-	BodySpritePath     = "resources/images/snake/body_sprite.png"
-	TailSpritePath     = "resources/images/snake/tail_sprite.png"
+	BodySpritePath     = "resources/images/snake/body_sprite_purple.png"
+	TailSpritePath     = "resources/images/snake/tail_sprite_purple.png"
 )
 
 // Food Sprites
@@ -28,6 +28,7 @@ const (
 	NumbersSpritePath = "resources/images/ui/numbers.png"
 	DigitHeight       = 33
 	StarSpritePath    = "resources/images/ui/star.png"
+	IconSpritePath    = "resources/images/ui/icon.png"
 )
 
 var (
@@ -43,6 +44,7 @@ var (
 	FoodSprite       *ebiten.Image
 	NumbersSprite    *ebiten.Image
 	StarSprite       *ebiten.Image
+	IconSprite       *ebiten.Image
 )
 
 func LoadImage(path string) *ebiten.Image {
@@ -62,4 +64,5 @@ func LoadImages() {
 	FoodSprite = LoadImage(FoodSpritePath)
 	NumbersSprite = LoadImage(NumbersSpritePath)
 	StarSprite = LoadImage(StarSpritePath)
+	IconSprite = LoadImage(IconSpritePath)
 }

@@ -13,7 +13,7 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
-func (g *Game) DrawScoreWithSprite(screen *ebiten.Image, sprite *ebiten.Image, score int, x, y int) {
+func (b *Board) DrawScoreWithSprite(screen *ebiten.Image, sprite *ebiten.Image, score int, x, y int) {
 	spriteWidth := sprite.Bounds().Dx()
 	op := &ebiten.DrawImageOptions{}
 	op.GeoM.Translate(float64(x), float64(y))
@@ -40,12 +40,12 @@ func (g *Game) DrawScoreWithSprite(screen *ebiten.Image, sprite *ebiten.Image, s
 	}
 }
 
-func (g *Game) drawScore(screen *ebiten.Image, score int, x, y int) {
-	g.DrawScoreWithSprite(screen, images.FoodSprite, score, x, y)
+func (b *Board) drawScore(screen *ebiten.Image, score int, x, y int) {
+	b.DrawScoreWithSprite(screen, images.FoodSprite, score, x, y)
 }
 
-func (g *Game) drawHighScore(screen *ebiten.Image, score int, x, y int) {
-	g.DrawScoreWithSprite(screen, images.StarSprite, score, x, y)
+func (b *Board) drawHighScore(screen *ebiten.Image, score int, x, y int) {
+	b.DrawScoreWithSprite(screen, images.StarSprite, score, x, y)
 }
 
 // saveHighScore saves the score along with the current date and time to the scoreboard file
@@ -143,9 +143,9 @@ func getHighestScore() int {
 }
 
 // updateScore updates the score and high score based on the current game state
-func (g *Game) updateScore() {
-	g.score++
-	if g.score > g.highScore {
-		g.highScore = g.score
+func (b *Board) updateScore() {
+	b.score++
+	if b.score > b.highScore {
+		b.highScore = b.score
 	}
 }

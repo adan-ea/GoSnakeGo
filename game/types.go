@@ -18,8 +18,8 @@ type Point struct {
 type Direction int
 
 const (
-	Up Direction = iota
-	Down
+	Right Direction = iota
 	Left
-	Right
+	Down
+	Up
 )

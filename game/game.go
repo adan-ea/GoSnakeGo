@@ -2,36 +2,28 @@ package game
 
 import (
 	"bytes"
-	"fmt"
 	"log"
-	"math/rand"
-	"time"
 
 	"github.com/adan-ea/GoSnakeGo/constants"
 	raudio "github.com/adan-ea/GoSnakeGo/resources/audio"
-	"github.com/adan-ea/GoSnakeGo/resources/images"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/audio"
 	"github.com/hajimehoshi/ebiten/v2/audio/vorbis"
 	"github.com/hajimehoshi/ebiten/v2/audio/wav"
-	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 )
 
 const (
 	bestScorePath = "resources/scoreboard.txt"
 	nbScoreSaved  = 5
+	boardRows     = 18
+	boardCols     = 18
 )
 
 // Game represents the game state and logic
 type Game struct {
-	mode      Mode
-	rows      int
-	cols      int
-	snake     *Snake
-	food      *Food
-	score     int
-	highScore int
-	timer     time.Time
+	input *Input
+	board *Board
+	mode  Mode
 
 	audioContext   *audio.Context
 	hitPlayer      *audio.Player
@@ -42,17 +34,19 @@ type Game struct {
 
 func NewGame(rows int, cols int) *Game {
 	game := &Game{
-		rows:      rows,
-		cols:      cols,
-		timer:     time.Now(),
-		highScore: getHighestScore(),
-		snake:     NewSnake(),
+		input: NewInput(),
+		board: NewBoard(boardRows, boardCols),
 	}
 	game.initAudio()
-	game.placeFood()
 
 	return game
 }
+
+/*
+func NewGame() *Game {
+
+}
+*/
 
 // initAudio initializes the audio context and players
 func (g *Game) initAudio() {
@@ -101,23 +95,6 @@ func (g *Game) initAudio() {
 	}
 }
 
-const (
-	BaseInterval  = time.Millisecond * 200
-	MinInterval   = time.Millisecond * 50
-	SpeedIncrease = time.Millisecond * 5
-)
-
-func CalculateInterval(score int) time.Duration {
-	// Calculate the new interval by decreasing it linearly with the score
-	newInterval := BaseInterval - time.Duration(score)*SpeedIncrease
-
-	// Ensure the interval does not go below the minimum interval
-	if newInterval < MinInterval {
-		return MinInterval
-	}
-	return newInterval
-}
-
 func (g *Game) Update() error {
 	switch g.mode {
 	case ModeTitle:
@@ -126,108 +103,36 @@ func (g *Game) Update() error {
 			g.themePlayer.Rewind()
 		}
 	case ModeGame:
+		if g.board.gameOver {
+			g.mode = ModeGameOver
+		}
 		if !g.themePlayer.IsPlaying() {
 			g.themePlayer.Rewind()
 			g.themePlayer.Play()
 		}
-
-		// snake goes faster when there are more points
-		interval := CalculateInterval(g.score)
-		if newDir, ok := Dir(); ok {
-			g.snake.ChangeDirection(newDir)
-		}
-
-		if time.Since(g.timer) >= interval {
-			if err := g.moveSnake(); err != nil {
-				return err
-			}
-
-			g.timer = time.Now()
-		}
+		g.board.Update(g.input)
 
 	case ModeGameOver:
 		g.themePlayer.Pause()
-		g.gameOverPlayer.Play()
-		
+
+		if !g.gameOverPlayer.IsPlaying() {
+			g.gameOverPlayer.Rewind()
+			g.gameOverPlayer.Play()
+		}
+
 		if ebiten.IsKeyPressed(ebiten.KeySpace) {
-			NewGame(g.rows, g.cols)
+			g.board = NewBoard(boardRows, boardCols)
 			g.mode = ModeGame
-			g.themePlayer.Rewind()
-			g.themePlayer.Play()
 		}
 	}
 
 	return nil
-}
-
-func (g *Game) placeFood() {
-	var x, y int
-	validPosition := false
-
-	for !validPosition {
-		x = rand.Intn(g.rows)
-		y = rand.Intn(g.cols)
-
-		validPosition = true
-		for _, p := range g.snake.Body {
-			if p.x == x && p.y == y {
-				validPosition = false
-				break
-			}
-		}
-	}
-
-	g.food = NewFood(x, y)
-}
-
-func (g *Game) moveSnake() error {
-	// remove tail first, add 1 in front
-	g.snake.Move()
-	if g.snakeLeftBoard() || g.snake.HeadHitsBody() {
-		g.mode = ModeGameOver
-		saveHighScore(g.score)
-		return nil
-	}
-
-	if g.snake.HeadHits(g.food.x, g.food.y) {
-		// the snake grows on the next move
-		g.snake.justAte = true
-
-		g.placeFood()
-		g.updateScore()
-	}
-
-	return nil
-}
-
-func (g *Game) snakeLeftBoard() bool {
-	head := g.snake.Head()
-	return head.x > g.cols-1 || head.y > g.rows-1 || head.x < 0 || head.y < 0
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
-
 	switch g.mode {
 	case ModeGame:
-		// Calculate the offset to center the game area
-		offsetX := (constants.ScreenWidth - constants.GameWidth) / 2
-		offsetY := (constants.ScreenHeight - constants.GameHeight) / 2
-
-		// Draw the background in the game area
-		op := &ebiten.DrawImageOptions{}
-		for y := 0; y < constants.GameHeight; y += constants.TileSize * 2 {
-			for x := 0; x < constants.GameWidth; x += constants.TileSize * 2 {
-				op.GeoM.Reset()
-				op.GeoM.Translate(float64(x+offsetX), float64(y+offsetY))
-				screen.DrawImage(images.BackgroundSprite, op)
-			}
-		}
-
-		g.snake.Draw(screen)
-		g.food.Draw(screen)
-		g.drawScore(screen, g.score, 40, 7)
-		g.drawHighScore(screen, g.highScore, 550, 7)
-		ebitenutil.DebugPrint(screen, fmt.Sprintf("TPS: %0.2f", ebiten.ActualTPS()))
+		g.board.Draw(screen)
 	}
 }
 

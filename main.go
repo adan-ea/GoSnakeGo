@@ -21,11 +21,10 @@ import (
 	"github.com/hajimehoshi/ebiten/v2/text"
 	"golang.org/x/image/font"
 	"golang.org/x/image/font/basicfont"
+	"golang.org/x/image/font/opentype"
 
 	"gosnakego/resources/images"
 	"gosnakego/utils"
-	// "github.com/hajimehoshi/ebiten/v2/audio"
-	// "github.com/hajimehoshi/ebiten/v2/audio/mp3"
 )
 
 type Game struct {
@@ -51,11 +50,12 @@ var (
 )
 
 var (
-	img             *ebiten.Image
-	runnerImage     *ebiten.Image
-	file            *os.File
-	file_content    string
-	player_gameover *audio.player
+	img          *ebiten.Image
+	runnerImage  *ebiten.Image
+	file         *os.File
+	file_content string
+	normalFont   font.Face
+	largeFont    font.Face
 )
 
 func init() {
@@ -71,29 +71,43 @@ func init() {
 	f, err := ioutil.ReadFile("resources/scoreboard.txt")
 	file_content = string(f)
 
-	audioContext, err := audio.NewContext(44100)
+	fontData, err := ioutil.ReadFile("resources/font.TTF")
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	file, err := os.Open("resources/alexissexyy.mp3")
+	//création du font personnalisé
+	tt, err := opentype.Parse(fontData)
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer file.Close()
 
-	streamer, err := mp3.Decode(audioContext, file)
+	const dpi = 72
+	normalFont, err = opentype.NewFace(tt, &opentype.FaceOptions{
+		Size:    28,
+		DPI:     dpi,
+		Hinting: font.HintingFull,
+	})
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer streamer.Close()
 
-	player, err := audio.NewPlayer(audioContext, streamer)
+	largeFont, err = opentype.NewFace(tt, &opentype.FaceOptions{
+		Size:    48,
+		DPI:     dpi,
+		Hinting: font.HintingFull,
+	})
 	if err != nil {
 		log.Fatal(err)
 	}
-	player_gameover = player
+}
 
+func custombasicFont() font.Face {
+	return normalFont
+}
+
+func customlargeBasicFont() font.Face {
+	return largeFont
 }
 
 func HandleKeyPressed(g *Game) bool {
@@ -210,13 +224,11 @@ func (g *Game) Draw(screen *ebiten.Image) {
 
 		oneFifthHeight := utils.ScreenHeight / 8
 		// Dessiner le texte à la position calculée
-		text.Draw(screen, "Game Over", basicFont(), utils.ScreenWidth/2-25, oneFifthHeight, utils.GetBlackColor())
-		text.Draw(screen, fmt.Sprintf("Score: %d", g.score), basicFont(), utils.ScreenWidth/2-20, oneFifthHeight+20, utils.GetBlackColor())
-		text.Draw(screen, fmt.Sprintf("Best Score: %d", g.bestScore), basicFont(), utils.ScreenWidth/2-30, oneFifthHeight+40, utils.GetBlackColor())
-		text.Draw(screen, fmt.Sprintf("Scoreboard: %s", strings.Join(firstThreeLines, "\n")), basicFont(), utils.ScreenWidth/2-30, oneFifthHeight+40, utils.GetBlackColor())
-		text.Draw(screen, "Press SPACE to Restart", basicFont(), utils.ScreenWidth/2-80, oneFifthHeight+60, utils.GetBlackColor())
-
-		player_gameover.Play()
+		text.Draw(screen, "Game Over", customlargeBasicFont(), utils.ScreenWidth/3, oneFifthHeight, utils.GetBlackColor())
+		text.Draw(screen, "Press SPACE to Restart", custombasicFont(), utils.ScreenWidth/4, oneFifthHeight+30, utils.GetBlackColor())
+		text.Draw(screen, fmt.Sprintf("Score: %d", g.score), custombasicFont(), utils.ScreenWidth/5, oneFifthHeight+60, utils.GetBlackColor())
+		text.Draw(screen, fmt.Sprintf("Best Score: %d", g.bestScore), custombasicFont(), utils.ScreenWidth/5, oneFifthHeight+90, utils.GetBlackColor())
+		text.Draw(screen, fmt.Sprintf("Scoreboard:\n	%s", strings.Join(firstThreeLines, "\n	")), custombasicFont(), utils.ScreenWidth/5, oneFifthHeight+120, utils.GetBlackColor())
 
 		return
 	}
@@ -232,7 +244,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	}
 
 	// Draw score
-	text.Draw(screen, fmt.Sprintf("Score: %d, Best Score: %d", g.score, g.bestScore), basicFont(), 10, 20, utils.GetWhiteColor())
+	text.Draw(screen, fmt.Sprintf("Score: %d, Best Score: %d", g.score, g.bestScore), custombasicFont(), 10, 20, utils.GetWhiteColor())
 
 	// Draw head
 	op := &ebiten.DrawImageOptions{}

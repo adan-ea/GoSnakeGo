@@ -3,6 +3,9 @@ package game
 import (
 	"fmt"
 	"image"
+	"log"
+	"os"
+	"time"
 
 	"github.com/adan-ea/GoSnakeGo/constants"
 	"github.com/adan-ea/GoSnakeGo/food"
@@ -95,8 +98,14 @@ func (g *Game) DrawScore(screen *ebiten.Image, score int, x, y int) {
 	var digitWidths = []int{22, 18, 21, 22, 24, 22, 23, 21, 23, 22}
 	digitHeight := 33
 
+	// Draw the apple sprite
+	appleWidth := g.Food.Sprite.Bounds().Dx()
+	op := &ebiten.DrawImageOptions{}
+	op.GeoM.Translate(float64(x), float64(y))
+	screen.DrawImage(g.Food.Sprite, op)
+
 	scoreStr := fmt.Sprintf("%d", score)
-	currentX := x
+	currentX := x + appleWidth + 5
 
 	for _, char := range scoreStr {
 		digit := int(char - '0')
@@ -140,12 +149,14 @@ func (g *Game) HandleCollision() {
 	if head.X < 0 || head.X >= constants.GameWidth/constants.TileSize ||
 		head.Y < 0 || head.Y >= constants.GameHeight/constants.TileSize {
 		g.GameOver = true
+		SaveHighScore(g.Score)
 	}
 
 	// Check if the snake has collided with itself
 	for i := 1; i < len(g.Snake.Body); i++ {
 		if head == g.Snake.Body[i] {
 			g.GameOver = true
+			SaveHighScore(g.Score)
 			break
 		}
 	}
@@ -156,4 +167,20 @@ func (g *Game) HandleCollision() {
 		g.Food.Respawn(g.Snake.Body)
 		g.Score++
 	}
+}
+
+func SaveHighScore(score int) {
+	datetime := time.Now()
+	newRow := []byte("\n|" + datetime.Format("01-02-2006 15:04:05") + "|" + fmt.Sprintf("%d", score) + "|  ")
+	f, err := os.OpenFile("HIGHSCORES.md", os.O_APPEND|os.O_WRONLY, 0644)
+	if err != nil {
+		log.Fatalf("Error opening file: %s", err)
+	}
+
+	_, err2 := f.Write(newRow)
+	if err2 != nil {
+		log.Fatalf("Error writing to file: %s", err2)
+	}
+
+	f.Close()
 }

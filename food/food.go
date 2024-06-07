@@ -10,14 +10,14 @@ import (
 // Food represents the food
 type Food struct {
 	position constants.Point
-	sprite   *ebiten.Image
+	Sprite   *ebiten.Image
 }
 
 // SpawnFood creates a new instance of Food
 func SpawnFood(snakeBody []constants.Point) *Food {
 	food := &Food{}
 
-	food.sprite = constants.LoadImage(constants.FoodSpritePath)
+	food.Sprite = constants.LoadImage(constants.FoodSpritePath)
 	for {
 		x := rand.Intn(constants.GameWidth / constants.TileSize)
 		y := rand.Intn(constants.GameHeight / constants.TileSize)
@@ -64,7 +64,7 @@ func (f *Food) Draw(screen *ebiten.Image) {
 
 	op := &ebiten.DrawImageOptions{}
 	op.GeoM.Translate(sx, sy)
-	screen.DrawImage(f.sprite, op)
+	screen.DrawImage(f.Sprite, op)
 }
 
 // GetPosition returns the position of the food

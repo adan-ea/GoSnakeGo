@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"math/rand"
+	"time"
 
 	"github.com/adan-ea/GoSnakeGo/constants"
 	raudio "github.com/adan-ea/GoSnakeGo/resources/audio"
@@ -17,22 +18,20 @@ import (
 )
 
 const (
-	BaseSpeed     = 10 // Base speed (higher means slower)
-	SpeedIncrease = 1  // Speed increase factor
-	ScoreInterval = 5  // Points interval to increase speed
-
 	bestScorePath = "resources/scoreboard.txt"
 	nbScoreSaved  = 5
 )
 
 // Game represents the game state and logic
 type Game struct {
-	mode       Mode
-	snake      *Snake
-	food       *Food
-	score      int
-	highScore  int
-	updateTick int
+	mode      Mode
+	rows      int
+	cols      int
+	snake     *Snake
+	food      *Food
+	score     int
+	highScore int
+	timer     time.Time
 
 	audioContext   *audio.Context
 	hitPlayer      *audio.Player
@@ -41,37 +40,18 @@ type Game struct {
 	themePlayer    *audio.Player
 }
 
-func NewGame() *Game {
-	return &Game{}
-}
-
-// Init initializes the game state
-func (g *Game) Init() {
-	images.LoadImages()
-	g.initAudio()
-
-	g.snake = NewSnake()
-	g.placeFood()
-	g.score = 0
-	g.highScore = getHighestScore()
-	g.updateTick = 0
-
-}
-
-func (g *Game) placeFood() {
-	var x, y int
-
-	for {
-		x = rand.Intn((constants.GameWidth / constants.TileSize))
-		y = rand.Intn((constants.GameWidth / constants.TileSize))
-
-		// make sure we don't put a food on a snake
-		if !g.snake.HeadHits(x, y) {
-			break
-		}
+func NewGame(rows int, cols int) *Game {
+	game := &Game{
+		rows:      rows,
+		cols:      cols,
+		timer:     time.Now(),
+		highScore: getHighestScore(),
+		snake:     NewSnake(),
 	}
+	game.initAudio()
+	game.placeFood()
 
-	g.food = NewFood(x, y)
+	return game
 }
 
 // initAudio initializes the audio context and players
@@ -121,6 +101,23 @@ func (g *Game) initAudio() {
 	}
 }
 
+const (
+	BaseInterval  = time.Millisecond * 200
+	MinInterval   = time.Millisecond * 50
+	SpeedIncrease = time.Millisecond * 5
+)
+
+func CalculateInterval(score int) time.Duration {
+	// Calculate the new interval by decreasing it linearly with the score
+	newInterval := BaseInterval - time.Duration(score)*SpeedIncrease
+
+	// Ensure the interval does not go below the minimum interval
+	if newInterval < MinInterval {
+		return MinInterval
+	}
+	return newInterval
+}
+
 func (g *Game) Update() error {
 	switch g.mode {
 	case ModeTitle:
@@ -134,41 +131,27 @@ func (g *Game) Update() error {
 			g.themePlayer.Play()
 		}
 
+		// snake goes faster when there are more points
+		interval := CalculateInterval(g.score)
 		if newDir, ok := Dir(); ok {
 			g.snake.ChangeDirection(newDir)
 		}
 
-		// Calculate the current speed based on the score
-		currentSpeed := BaseSpeed - (g.score/ScoreInterval)*SpeedIncrease
-		if currentSpeed < 1 {
-			currentSpeed = 1
+		if time.Since(g.timer) >= interval {
+			if err := g.moveSnake(); err != nil {
+				return err
+			}
+
+			g.timer = time.Now()
 		}
-
-		// Perform a snake movement tick
-		g.updateTick++
-		if g.updateTick%currentSpeed != 0 {
-			return nil
-		}
-
-		g.snake.MoveSnake()
-
-		// Check for game over state
-		if g.isGameOver() {
-			g.themePlayer.Pause()
-			g.gameOverPlayer.Rewind()
-
-			g.mode = ModeGameOver
-			g.hitPlayer.Play()
-			saveHighScore(g.score)
-		}
-
-		g.eatApple()
 
 	case ModeGameOver:
+		g.themePlayer.Pause()
 		g.gameOverPlayer.Play()
+		
 		if ebiten.IsKeyPressed(ebiten.KeySpace) {
+			NewGame(g.rows, g.cols)
 			g.mode = ModeGame
-			g.Init()
 			g.themePlayer.Rewind()
 			g.themePlayer.Play()
 		}
@@ -177,37 +160,49 @@ func (g *Game) Update() error {
 	return nil
 }
 
-// looks if the snake ate an apple and updates the score
-func (g *Game) eatApple() {
-	// Eating food
-	if g.snake.Head() == g.food.getFoodPosition() {
-		if err := g.eatPlayer.Rewind(); err != nil {
-			return
+func (g *Game) placeFood() {
+	var x, y int
+	validPosition := false
+
+	for !validPosition {
+		x = rand.Intn(g.rows)
+		y = rand.Intn(g.cols)
+
+		validPosition = true
+		for _, p := range g.snake.Body {
+			if p.x == x && p.y == y {
+				validPosition = false
+				break
+			}
 		}
-		g.eatPlayer.Play()
-		g.snake.Body = append(g.snake.Body, g.food.getFoodPosition())
+	}
+
+	g.food = NewFood(x, y)
+}
+
+func (g *Game) moveSnake() error {
+	// remove tail first, add 1 in front
+	g.snake.Move()
+	if g.snakeLeftBoard() || g.snake.HeadHitsBody() {
+		g.mode = ModeGameOver
+		saveHighScore(g.score)
+		return nil
+	}
+
+	if g.snake.HeadHits(g.food.x, g.food.y) {
+		// the snake grows on the next move
+		g.snake.justAte = true
+
 		g.placeFood()
 		g.updateScore()
 	}
+
+	return nil
 }
 
-// Add a method to check if the game is over
-func (g *Game) isGameOver() bool {
+func (g *Game) snakeLeftBoard() bool {
 	head := g.snake.Head()
-	// Check if the snake has collided with the walls
-	if head.x < 0 || head.x >= constants.GameWidth/constants.TileSize ||
-		head.y < 0 || head.y >= constants.GameHeight/constants.TileSize {
-		return true
-	}
-
-	// Check if the snake has collided with itself
-	for i := 1; i < len(g.snake.Body); i++ {
-		if head == g.snake.Body[i] {
-			return true
-		}
-	}
-
-	return false
+	return head.x > g.cols-1 || head.y > g.rows-1 || head.x < 0 || head.y < 0
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {

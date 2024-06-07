@@ -33,9 +33,10 @@ type Snake struct {
 func NewSnake() *Snake {
 	return &Snake{
 		Body: []Point{
-			{x: 3, y: 1},
+			{x: 0, y: 1},
+			{x: 1, y: 1},
 			{x: 2, y: 1},
-			{x: 1, y: 1}},
+			{x: 3, y: 1}},
 		Direction:     Right,
 		currentFrame:  0,
 		lastFrameTime: time.Now(),
@@ -44,7 +45,21 @@ func NewSnake() *Snake {
 
 // Returns the position of the snake's head
 func (s *Snake) Head() Point {
-	return s.Body[0]
+	return s.Body[len(s.Body)-1]
+}
+
+func (s *Snake) ChangeDirection(newDir Direction) {
+	opposites := map[Direction]Direction{
+		Up:    Down,
+		Right: Left,
+		Down:  Up,
+		Left:  Right,
+	}
+
+	// Prevent the snake from reversing direction
+	if o, ok := opposites[newDir]; ok && o != s.Direction {
+		s.Direction = newDir
+	}
 }
 
 // HeadHits checks if the snake's head is at the given position
@@ -54,11 +69,24 @@ func (s *Snake) HeadHits(x, y int) bool {
 	return h.x == x && h.y == y
 }
 
-// MoveSnake moves the snake one step in its current direction
-func (s *Snake) MoveSnake() error {
-	// Create a copy of the head position to avoid modifying the original directly
-	newHead := s.Body[0]
+func (s *Snake) HeadHitsBody() bool {
+	h := s.Head()
+	bodyWithoutHead := s.Body[:len(s.Body)-1]
 
+	for _, b := range bodyWithoutHead {
+		if b.x == h.x && b.y == h.y {
+			return true
+		}
+	}
+
+	return false
+}
+
+// Move moves the snake one step in its current direction
+func (s *Snake) Move() {
+	// Create a copy of the head position to avoid modifying the original directly
+	h := s.Head()
+	newHead := Point{x: h.x, y: h.y}
 	// Calculate the new position of the head based on the direction
 	switch s.Direction {
 	case Up:
@@ -70,28 +98,12 @@ func (s *Snake) MoveSnake() error {
 	case Right:
 		newHead.x++
 	}
-	// Move each segment of the snake's body to the position of the segment in front of it
-	for i := len(s.Body) - 1; i > 0; i-- {
-		s.Body[i] = s.Body[i-1]
-	}
 
-	// Update the position of the head
-	s.Body[0] = newHead
-
-	return nil
-}
-
-func (s *Snake) ChangeDirection(newDir Direction) {
-	opposites := map[Direction]Direction{
-		Up:    Down,
-		Right: Left,
-		Down:  Up,
-		Left:  Right,
-	}
-
-	// don't allow changing direction to opposite
-	if o, ok := opposites[newDir]; ok && o != s.Direction {
-		s.Direction = newDir
+	if s.justAte {
+		s.Body = append(s.Body, newHead)
+		s.justAte = false
+	} else {
+		s.Body = append(s.Body[1:], newHead)
 	}
 }
 
@@ -102,16 +114,16 @@ func (s *Snake) Draw(screen *ebiten.Image) {
 	offsetY := (constants.ScreenHeight - constants.GameHeight) / 2
 
 	// Draw the snake's body and tail first
-	for i := len(s.Body) - 1; i >= 0; i-- {
+	for i := 0; i < len(s.Body); i++ {
 		part := s.Body[i]
 		sx := float64(offsetX + part.x*constants.TileSize)
 		sy := float64(offsetY + part.y*constants.TileSize)
 
 		switch {
 		case i == 0:
-			s.handleHead(screen, sx, sy)
-		case i == len(s.Body)-1:
 			s.handleTail(screen, sx, sy, i)
+		case i == len(s.Body)-1:
+			s.handleHead(screen, sx, sy)
 		default:
 			s.handleBody(screen, sx, sy, i)
 		}
@@ -180,7 +192,7 @@ func (s *Snake) handleBody(screen *ebiten.Image, sx, sy float64, i int) {
 // handleTail draws the snake's tail
 func (s *Snake) handleTail(screen *ebiten.Image, sx, sy float64, i int) {
 	tail := s.Body[i]
-	prev := s.Body[i-1]
+	prev := s.Body[i+1]
 
 	var tailImage *ebiten.Image
 	switch {

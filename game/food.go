@@ -1,4 +1,4 @@
-package food
+package game
 
 import (
 	"math/rand"
@@ -13,8 +13,8 @@ type Food struct {
 	Sprite   *ebiten.Image
 }
 
-// SpawnFood creates a new instance of Food
-func SpawnFood(snakeBody []constants.Point) *Food {
+// spawnFood creates a new instance of Food
+func spawnFood(snakeBody []constants.Point) *Food {
 	food := &Food{}
 
 	food.Sprite = constants.LoadImage(constants.FoodSpritePath)
@@ -36,8 +36,8 @@ func SpawnFood(snakeBody []constants.Point) *Food {
 	return food
 }
 
-// Respawn repositions the food to a new location avoiding the snake's body
-func (f *Food) Respawn(snakeBody []constants.Point) {
+// changePosition repositions the food to a new location avoiding the snake's body
+func (f *Food) changePosition(snakeBody []constants.Point) {
 	for {
 		x := rand.Intn(constants.GameWidth / constants.TileSize)
 		y := rand.Intn(constants.GameHeight / constants.TileSize)
@@ -67,7 +67,7 @@ func (f *Food) Draw(screen *ebiten.Image) {
 	screen.DrawImage(f.Sprite, op)
 }
 
-// GetPosition returns the position of the food
-func (f *Food) GetPosition() constants.Point {
+// getFoodPosition returns the position of the food
+func (f *Food) getFoodPosition() constants.Point {
 	return f.position
 }

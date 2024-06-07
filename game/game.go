@@ -2,8 +2,6 @@ package game
 
 import (
 	"github.com/adan-ea/GoSnakeGo/constants"
-	"github.com/adan-ea/GoSnakeGo/food"
-	"github.com/adan-ea/GoSnakeGo/snake"
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
@@ -18,8 +16,8 @@ const (
 
 // Game represents the game state and logic
 type Game struct {
-	snake            *snake.Snake
-	food             *food.Food
+	snake            *Snake
+	food             *Food
 	score            int
 	highScore        int
 	gameOver         bool
@@ -35,8 +33,8 @@ func NewGame() *Game {
 
 // Init initializes the game state
 func (g *Game) Init() {
-	g.snake = snake.InitSnake()
-	g.food = food.SpawnFood(g.snake.Body)
+	g.snake = initSnake()
+	g.food = spawnFood(g.snake.Body)
 	g.backgroundSprite = constants.LoadImage(constants.BackgroundImagePath)
 	g.numberSprite = constants.LoadImage(constants.NumbersSpritePath)
 	g.starSprite = constants.LoadImage(constants.StarSpritePath)
@@ -100,23 +98,23 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
 	return constants.ScreenWidth, constants.ScreenHeight
 }
 
-func HandleKeyPressed(s *snake.Snake) bool {
+func HandleKeyPressed(s *Snake) bool {
 	// Control snake
 	if ebiten.IsKeyPressed(ebiten.KeyArrowUp) || ebiten.IsKeyPressed(ebiten.KeyW) {
-		s.ChangeDirection(constants.Up)
+		s.changeDirection(constants.Up)
 	} else if ebiten.IsKeyPressed(ebiten.KeyArrowDown) || ebiten.IsKeyPressed(ebiten.KeyS) {
-		s.ChangeDirection(constants.Down)
+		s.changeDirection(constants.Down)
 	} else if ebiten.IsKeyPressed(ebiten.KeyArrowLeft) || ebiten.IsKeyPressed(ebiten.KeyA) {
-		s.ChangeDirection(constants.Left)
+		s.changeDirection(constants.Left)
 	} else if ebiten.IsKeyPressed(ebiten.KeyArrowRight) || ebiten.IsKeyPressed(ebiten.KeyD) {
-		s.ChangeDirection(constants.Right)
+		s.changeDirection(constants.Right)
 	}
 	return true
 }
 
 func (g *Game) HandleCollision() {
 	// Check if the snake has collided with the walls
-	head := g.snake.GetHead()
+	head := g.snake.getHead()
 	if head.X < 0 || head.X >= constants.GameWidth/constants.TileSize ||
 		head.Y < 0 || head.Y >= constants.GameHeight/constants.TileSize {
 		g.gameOver = true
@@ -133,9 +131,9 @@ func (g *Game) HandleCollision() {
 	}
 
 	// Eating food
-	if g.snake.GetHead() == g.food.GetPosition() {
-		g.snake.Body = append(g.snake.Body, g.food.GetPosition())
-		g.food.Respawn(g.snake.Body)
+	if g.snake.getHead() == g.food.getFoodPosition() {
+		g.snake.Body = append(g.snake.Body, g.food.getFoodPosition())
+		g.food.changePosition(g.snake.Body)
 		g.updateScore()
 	}
 }

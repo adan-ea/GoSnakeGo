@@ -1,4 +1,4 @@
-package snake
+package game
 
 import (
 	"image"
@@ -30,8 +30,8 @@ type Snake struct {
 	tailSprite    *ebiten.Image
 }
 
-// InitSnake creates a new instance of Snake
-func InitSnake() *Snake {
+// initSnake creates a new instance of Snake
+func initSnake() *Snake {
 	snake := &Snake{
 		Body: []constants.Point{
 			{X: 3, Y: 1},
@@ -55,11 +55,11 @@ func (s *Snake) Update() {
 		s.lastFrameTime = time.Now()
 	}
 
-	s.MoveSnake()
+	s.moveSnake()
 }
 
-// MoveSnake moves the snake one step in its current direction
-func (s *Snake) MoveSnake() {
+// moveSnake moves the snake one step in its current direction
+func (s *Snake) moveSnake() {
 	// Create a copy of the head position to avoid modifying the original directly
 	newHead := s.Body[0]
 
@@ -83,8 +83,8 @@ func (s *Snake) MoveSnake() {
 	s.Body[0] = newHead
 }
 
-// ChangeDirection changes the direction of the snake
-func (s *Snake) ChangeDirection(newDir constants.Direction) {
+// changeDirection changes the direction of the snake
+func (s *Snake) changeDirection(newDir constants.Direction) {
 	// Prevent the snake from turning back on itself
 	if (s.Direction == constants.Up && newDir == constants.Down) ||
 		(s.Direction == constants.Down && newDir == constants.Up) ||
@@ -109,17 +109,17 @@ func (s *Snake) Draw(screen *ebiten.Image) {
 
 		switch {
 		case i == 0:
-			s.HandleHead(screen, sx, sy)
+			s.handleHead(screen, sx, sy)
 		case i == len(s.Body)-1:
-			s.HandleTail(screen, sx, sy, i)
+			s.handleTail(screen, sx, sy, i)
 		default:
-			s.HandleBody(screen, sx, sy, i)
+			s.handleBody(screen, sx, sy, i)
 		}
 	}
 }
 
-// HandleHead draws the snake's head
-func (s *Snake) HandleHead(screen *ebiten.Image, sx, sy float64) {
+// handleHead draws the snake's head
+func (s *Snake) handleHead(screen *ebiten.Image, sx, sy float64) {
 	frameX := s.currentFrame * headWidth
 	var frameY int
 
@@ -140,8 +140,8 @@ func (s *Snake) HandleHead(screen *ebiten.Image, sx, sy float64) {
 	screen.DrawImage(headImage, headOp)
 }
 
-// HandleBody draws the snake's body
-func (s *Snake) HandleBody(screen *ebiten.Image, sx, sy float64, i int) {
+// handleBody draws the snake's body
+func (s *Snake) handleBody(screen *ebiten.Image, sx, sy float64, i int) {
 	prev := s.Body[i-1]
 	curr := s.Body[i]
 	next := s.Body[i+1]
@@ -177,8 +177,8 @@ func (s *Snake) HandleBody(screen *ebiten.Image, sx, sy float64, i int) {
 	screen.DrawImage(bodyImage, bodyOp)
 }
 
-// HandleTail draws the snake's tail
-func (s *Snake) HandleTail(screen *ebiten.Image, sx, sy float64, i int) {
+// handleTail draws the snake's tail
+func (s *Snake) handleTail(screen *ebiten.Image, sx, sy float64, i int) {
 	tail := s.Body[i]
 	prev := s.Body[i-1]
 
@@ -200,6 +200,6 @@ func (s *Snake) HandleTail(screen *ebiten.Image, sx, sy float64, i int) {
 }
 
 // Returns the position of the snake's head
-func (s *Snake) GetHead() constants.Point {
+func (s *Snake) getHead() constants.Point {
 	return s.Body[0]
 }

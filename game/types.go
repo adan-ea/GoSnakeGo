@@ -1,4 +1,13 @@
-package constants
+package game
+
+// Mode represents the game mode
+type Mode int
+
+const (
+	ModeTitle Mode = iota
+	ModeGame
+	ModeGameOver
+)
 
 // Point represents a point in 2D space
 type Point struct {
@@ -8,7 +17,6 @@ type Point struct {
 // Direction represents the direction of the snake's movement
 type Direction int
 
-// Direction constants
 const (
 	Up Direction = iota
 	Down

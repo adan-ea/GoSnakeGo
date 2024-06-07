@@ -22,8 +22,8 @@ const (
 
 // Snake represents the snake
 type Snake struct {
-	Body          []constants.Point
-	Direction     constants.Direction
+	Body          []Point
+	Direction     Direction
 	currentFrame  int
 	lastFrameTime time.Time
 	headSprite    *ebiten.Image
@@ -34,11 +34,11 @@ type Snake struct {
 // initSnake creates a new instance of Snake
 func initSnake() *Snake {
 	snake := &Snake{
-		Body: []constants.Point{
+		Body: []Point{
 			{X: 3, Y: 1},
 			{X: 2, Y: 1},
 			{X: 1, Y: 1}},
-		Direction:     constants.Right,
+		Direction:     Right,
 		currentFrame:  0,
 		lastFrameTime: time.Now(),
 	}
@@ -66,13 +66,13 @@ func (s *Snake) MoveSnake() error {
 
 	// Calculate the new position of the head based on the direction
 	switch s.Direction {
-	case constants.Up:
+	case Up:
 		newHead.Y--
-	case constants.Down:
+	case Down:
 		newHead.Y++
-	case constants.Left:
+	case Left:
 		newHead.X--
-	case constants.Right:
+	case Right:
 		newHead.X++
 	}
 	// Move each segment of the snake's body to the position of the segment in front of it
@@ -86,16 +86,18 @@ func (s *Snake) MoveSnake() error {
 	return nil
 }
 
-// changeDirection changes the direction of the snake
-func (s *Snake) changeDirection(newDir constants.Direction) {
-	// Prevent the snake from turning back on itself
-	if (s.Direction == constants.Up && newDir == constants.Down) ||
-		(s.Direction == constants.Down && newDir == constants.Up) ||
-		(s.Direction == constants.Left && newDir == constants.Right) ||
-		(s.Direction == constants.Right && newDir == constants.Left) {
-		return
+func (s *Snake) ChangeDirection(newDir Direction) {
+	opposites := map[Direction]Direction{
+		Up:    Down,
+		Right: Left,
+		Down:  Up,
+		Left:  Right,
 	}
-	s.Direction = newDir
+
+	// don't allow changing direction to opposite
+	if o, ok := opposites[newDir]; ok && o != s.Direction {
+		s.Direction = newDir
+	}
 }
 
 // Draw draws the snake onto the screen
@@ -127,13 +129,13 @@ func (s *Snake) handleHead(screen *ebiten.Image, sx, sy float64) {
 	var frameY int
 
 	switch s.Direction {
-	case constants.Up:
+	case Up:
 		frameY = 1 * headHeight
-	case constants.Down:
+	case Down:
 		frameY = 2 * headHeight
-	case constants.Left:
+	case Left:
 		frameY = 3 * headHeight
-	case constants.Right:
+	case Right:
 		frameY = 0 * headHeight
 	}
 
@@ -203,6 +205,6 @@ func (s *Snake) handleTail(screen *ebiten.Image, sx, sy float64, i int) {
 }
 
 // Returns the position of the snake's head
-func (s *Snake) getHead() constants.Point {
+func (s *Snake) getHead() Point {
 	return s.Body[0]
 }

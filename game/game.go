@@ -26,7 +26,7 @@ const (
 
 // Game represents the game state and logic
 type Game struct {
-	mode       constants.Mode
+	mode       Mode
 	snake      *Snake
 	food       *Food
 	score      int
@@ -113,19 +113,20 @@ func (g *Game) initAudio() {
 
 func (g *Game) Update() error {
 	switch g.mode {
-	case constants.ModeTitle:
+	case ModeTitle:
 		if ebiten.IsKeyPressed(ebiten.KeySpace) {
-			g.mode = constants.ModeGame
+			g.mode = ModeGame
 			g.themePlayer.Rewind()
 		}
-	case constants.ModeGame:
+	case ModeGame:
 		if !g.themePlayer.IsPlaying() {
 			g.themePlayer.Rewind()
 			g.themePlayer.Play()
 		}
 
-		// Handle key presses to change direction
-		HandleKeyPressed(g.snake)
+		if newDir, ok := Dir(); ok {
+			g.snake.ChangeDirection(newDir)
+		}
 
 		// Calculate the current speed based on the score
 		currentSpeed := BaseSpeed - (g.score/ScoreInterval)*SpeedIncrease
@@ -146,17 +147,17 @@ func (g *Game) Update() error {
 			g.themePlayer.Pause()
 			g.gameOverPlayer.Rewind()
 
-			g.mode = constants.ModeGameOver
+			g.mode = ModeGameOver
 			g.hitPlayer.Play()
 			saveHighScore(g.score)
 		}
 
 		g.eatApple()
 
-	case constants.ModeGameOver:
+	case ModeGameOver:
 		g.gameOverPlayer.Play()
 		if ebiten.IsKeyPressed(ebiten.KeySpace) {
-			g.mode = constants.ModeGame
+			g.mode = ModeGame
 			g.Init()
 			g.themePlayer.Rewind()
 			g.themePlayer.Play()
@@ -165,6 +166,7 @@ func (g *Game) Update() error {
 
 	return nil
 }
+
 // looks if the snake ate an apple and updates the score
 func (g *Game) eatApple() {
 	// Eating food
@@ -201,7 +203,7 @@ func (g *Game) isGameOver() bool {
 func (g *Game) Draw(screen *ebiten.Image) {
 
 	switch g.mode {
-	case constants.ModeGame:
+	case ModeGame:
 		// Calculate the offset to center the game area
 		offsetX := (constants.ScreenWidth - constants.GameWidth) / 2
 		offsetY := (constants.ScreenHeight - constants.GameHeight) / 2
@@ -226,18 +228,4 @@ func (g *Game) Draw(screen *ebiten.Image) {
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
 	return constants.ScreenWidth, constants.ScreenHeight
-}
-
-func HandleKeyPressed(s *Snake) bool {
-	// Control snake
-	if ebiten.IsKeyPressed(ebiten.KeyArrowUp) || ebiten.IsKeyPressed(ebiten.KeyW) {
-		s.changeDirection(constants.Up)
-	} else if ebiten.IsKeyPressed(ebiten.KeyArrowDown) || ebiten.IsKeyPressed(ebiten.KeyS) {
-		s.changeDirection(constants.Down)
-	} else if ebiten.IsKeyPressed(ebiten.KeyArrowLeft) || ebiten.IsKeyPressed(ebiten.KeyA) {
-		s.changeDirection(constants.Left)
-	} else if ebiten.IsKeyPressed(ebiten.KeyArrowRight) || ebiten.IsKeyPressed(ebiten.KeyD) {
-		s.changeDirection(constants.Right)
-	}
-	return true
 }

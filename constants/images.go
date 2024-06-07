@@ -26,6 +26,12 @@ const (
 // UI Sprites
 const (
 	NumbersSpritePath = "resources/images/ui/numbers.png"
+	DigitHeight       = 33
+	StarSpritePath    = "resources/images/ui/star.png"
+)
+
+var (
+	DigitWidths = []int{22, 18, 21, 22, 24, 22, 23, 21, 23, 22}
 )
 
 func LoadImage(path string) *ebiten.Image {

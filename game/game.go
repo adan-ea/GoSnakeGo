@@ -1,12 +1,6 @@
 package game
 
 import (
-	"fmt"
-	"image"
-	"log"
-	"os"
-	"time"
-
 	"github.com/adan-ea/GoSnakeGo/constants"
 	"github.com/adan-ea/GoSnakeGo/food"
 	"github.com/adan-ea/GoSnakeGo/snake"
@@ -17,17 +11,22 @@ const (
 	BaseSpeed     = 10 // Base speed (higher means slower)
 	SpeedIncrease = 1  // Speed increase factor
 	ScoreInterval = 5  // Points interval to increase speed
+
+	bestScorePath = "resources/scoreboard.txt"
+	nbScoreSaved  = 5
 )
 
 // Game represents the game state and logic
 type Game struct {
-	Snake            *snake.Snake
-	Food             *food.Food
-	Score            int
-	GameOver         bool
+	snake            *snake.Snake
+	food             *food.Food
+	score            int
+	highScore        int
+	gameOver         bool
 	updateTick       int
 	backgroundSprite *ebiten.Image
 	numberSprite     *ebiten.Image
+	starSprite       *ebiten.Image
 }
 
 func NewGame() *Game {
@@ -36,18 +35,20 @@ func NewGame() *Game {
 
 // Init initializes the game state
 func (g *Game) Init() {
-	g.Snake = snake.InitSnake()
-	g.Food = food.SpawnFood(g.Snake.Body)
+	g.snake = snake.InitSnake()
+	g.food = food.SpawnFood(g.snake.Body)
 	g.backgroundSprite = constants.LoadImage(constants.BackgroundImagePath)
 	g.numberSprite = constants.LoadImage(constants.NumbersSpritePath)
-	g.GameOver = false
-	g.Score = 0
+	g.starSprite = constants.LoadImage(constants.StarSpritePath)
+	g.gameOver = false
+	g.score = 0
+	g.highScore = getHighestScore()
 	g.updateTick = 0
 }
 
 // Update updates the game state
 func (g *Game) Update() error {
-	if g.GameOver {
+	if g.gameOver {
 		if ebiten.IsKeyPressed(ebiten.KeySpace) {
 			g.Init()
 		}
@@ -55,10 +56,10 @@ func (g *Game) Update() error {
 	}
 
 	// Handle key presses to change direction
-	HandleKeyPressed(g.Snake)
+	HandleKeyPressed(g.snake)
 
 	// Calculate the current speed based on the score
-	currentSpeed := BaseSpeed - (g.Score/ScoreInterval)*SpeedIncrease
+	currentSpeed := BaseSpeed - (g.score/ScoreInterval)*SpeedIncrease
 	if currentSpeed < 1 {
 		currentSpeed = 1
 	}
@@ -68,7 +69,7 @@ func (g *Game) Update() error {
 	if g.updateTick%currentSpeed != 0 {
 		return nil
 	}
-	g.Snake.Update()
+	g.snake.Update()
 	g.HandleCollision()
 
 	return nil
@@ -89,40 +90,10 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		}
 	}
 
-	g.Snake.Draw(screen)
-	g.Food.Draw(screen)
-	g.DrawScore(screen, g.Score, 40, 7)
-}
-
-func (g *Game) DrawScore(screen *ebiten.Image, score int, x, y int) {
-	var digitWidths = []int{22, 18, 21, 22, 24, 22, 23, 21, 23, 22}
-	digitHeight := 33
-
-	// Draw the apple sprite
-	appleWidth := g.Food.Sprite.Bounds().Dx()
-	op := &ebiten.DrawImageOptions{}
-	op.GeoM.Translate(float64(x), float64(y))
-	screen.DrawImage(g.Food.Sprite, op)
-
-	scoreStr := fmt.Sprintf("%d", score)
-	currentX := x + appleWidth + 5
-
-	for _, char := range scoreStr {
-		digit := int(char - '0')
-		digitWidth := digitWidths[digit]
-		sx := 0
-		for j := 0; j < digit; j++ {
-			sx += digitWidths[j]
-		}
-		sy := 0
-		numImage := g.numberSprite.SubImage(image.Rect(sx, sy, sx+digitWidth, sy+digitHeight)).(*ebiten.Image)
-
-		op := &ebiten.DrawImageOptions{}
-		op.GeoM.Translate(float64(currentX), float64(y))
-		screen.DrawImage(numImage, op)
-
-		currentX += digitWidth
-	}
+	g.snake.Draw(screen)
+	g.food.Draw(screen)
+	g.drawScore(screen, g.score, 40, 7)
+	g.drawHighScore(screen, g.highScore, 550, 7)
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
@@ -145,42 +116,26 @@ func HandleKeyPressed(s *snake.Snake) bool {
 
 func (g *Game) HandleCollision() {
 	// Check if the snake has collided with the walls
-	head := g.Snake.GetHead()
+	head := g.snake.GetHead()
 	if head.X < 0 || head.X >= constants.GameWidth/constants.TileSize ||
 		head.Y < 0 || head.Y >= constants.GameHeight/constants.TileSize {
-		g.GameOver = true
-		SaveHighScore(g.Score)
+		g.gameOver = true
+		saveHighScore(g.score)
 	}
 
 	// Check if the snake has collided with itself
-	for i := 1; i < len(g.Snake.Body); i++ {
-		if head == g.Snake.Body[i] {
-			g.GameOver = true
-			SaveHighScore(g.Score)
+	for i := 1; i < len(g.snake.Body); i++ {
+		if head == g.snake.Body[i] {
+			g.gameOver = true
+			saveHighScore(g.score)
 			break
 		}
 	}
 
 	// Eating food
-	if g.Snake.GetHead() == g.Food.GetPosition() {
-		g.Snake.Body = append(g.Snake.Body, g.Food.GetPosition())
-		g.Food.Respawn(g.Snake.Body)
-		g.Score++
+	if g.snake.GetHead() == g.food.GetPosition() {
+		g.snake.Body = append(g.snake.Body, g.food.GetPosition())
+		g.food.Respawn(g.snake.Body)
+		g.updateScore()
 	}
-}
-
-func SaveHighScore(score int) {
-	datetime := time.Now()
-	newRow := []byte("\n|" + datetime.Format("01-02-2006 15:04:05") + "|" + fmt.Sprintf("%d", score) + "|  ")
-	f, err := os.OpenFile("HIGHSCORES.md", os.O_APPEND|os.O_WRONLY, 0644)
-	if err != nil {
-		log.Fatalf("Error opening file: %s", err)
-	}
-
-	_, err2 := f.Write(newRow)
-	if err2 != nil {
-		log.Fatalf("Error writing to file: %s", err2)
-	}
-
-	f.Close()
 }

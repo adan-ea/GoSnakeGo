@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/adan-ea/GoSnakeGo/constants"
+	"github.com/adan-ea/GoSnakeGo/resources/images"
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
@@ -41,9 +42,9 @@ func initSnake() *Snake {
 		currentFrame:  0,
 		lastFrameTime: time.Now(),
 	}
-	snake.headSprite = constants.LoadImage(constants.HeadSpriteLeftPath)
-	snake.bodySprite = constants.LoadImage(constants.BodySpritePath)
-	snake.tailSprite = constants.LoadImage(constants.TailSpritePath)
+	snake.headSprite = images.LoadImage(images.HeadSpriteLeftPath)
+	snake.bodySprite = images.LoadImage(images.BodySpritePath)
+	snake.tailSprite = images.LoadImage(images.TailSpritePath)
 
 	return snake
 }
@@ -55,11 +56,11 @@ func (s *Snake) Update() {
 		s.lastFrameTime = time.Now()
 	}
 
-	s.moveSnake()
+	s.MoveSnake()
 }
 
-// moveSnake moves the snake one step in its current direction
-func (s *Snake) moveSnake() {
+// MoveSnake moves the snake one step in its current direction
+func (s *Snake) MoveSnake() error {
 	// Create a copy of the head position to avoid modifying the original directly
 	newHead := s.Body[0]
 
@@ -81,6 +82,8 @@ func (s *Snake) moveSnake() {
 
 	// Update the position of the head
 	s.Body[0] = newHead
+
+	return nil
 }
 
 // changeDirection changes the direction of the snake

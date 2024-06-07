@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/adan-ea/GoSnakeGo/constants"
+	"github.com/adan-ea/GoSnakeGo/resources/images"
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
@@ -24,13 +24,13 @@ func (g *Game) DrawScoreWithSprite(screen *ebiten.Image, sprite *ebiten.Image, s
 
 	for _, char := range scoreStr {
 		digit := int(char - '0')
-		digitWidth := constants.DigitWidths[digit]
+		digitWidth := images.DigitWidths[digit]
 		sx := 0
 		for j := 0; j < digit; j++ {
-			sx += constants.DigitWidths[j]
+			sx += images.DigitWidths[j]
 		}
 		sy := 0
-		numImage := g.numberSprite.SubImage(image.Rect(sx, sy, sx+digitWidth, sy+constants.DigitHeight)).(*ebiten.Image)
+		numImage := g.numberSprite.SubImage(image.Rect(sx, sy, sx+digitWidth, sy+images.DigitHeight)).(*ebiten.Image)
 
 		op := &ebiten.DrawImageOptions{}
 		op.GeoM.Translate(float64(currentX), float64(y))

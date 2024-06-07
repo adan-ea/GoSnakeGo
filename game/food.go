@@ -4,6 +4,7 @@ import (
 	"math/rand"
 
 	"github.com/adan-ea/GoSnakeGo/constants"
+	"github.com/adan-ea/GoSnakeGo/resources/images"
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
@@ -17,7 +18,7 @@ type Food struct {
 func spawnFood(snakeBody []constants.Point) *Food {
 	food := &Food{}
 
-	food.Sprite = constants.LoadImage(constants.FoodSpritePath)
+	food.Sprite = images.LoadImage(images.FoodSpritePath)
 	for {
 		x := rand.Intn(constants.GameWidth / constants.TileSize)
 		y := rand.Intn(constants.GameHeight / constants.TileSize)

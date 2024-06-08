@@ -98,12 +98,14 @@ func (g *Game) initAudio() {
 func (g *Game) Update() error {
 	switch g.mode {
 	case ModeTitle:
-		if ebiten.IsKeyPressed(ebiten.KeySpace) {
+		if Space() {
 			g.mode = ModeGame
 			g.themePlayer.Rewind()
 		}
 	case ModeGame:
 		if g.board.gameOver {
+			g.gameOverPlayer.Rewind()
+			g.gameOverPlayer.Play()
 			g.mode = ModeGameOver
 		}
 		if !g.themePlayer.IsPlaying() {
@@ -115,12 +117,7 @@ func (g *Game) Update() error {
 	case ModeGameOver:
 		g.themePlayer.Pause()
 
-		if !g.gameOverPlayer.IsPlaying() {
-			g.gameOverPlayer.Rewind()
-			g.gameOverPlayer.Play()
-		}
-
-		if ebiten.IsKeyPressed(ebiten.KeySpace) {
+		if Space() {
 			g.board = NewBoard(boardRows, boardCols)
 			g.mode = ModeGame
 		}

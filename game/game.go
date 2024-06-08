@@ -108,9 +108,15 @@ func (g *Game) Update() error {
 			g.gameOverPlayer.Play()
 			g.mode = ModeGameOver
 		}
+
 		if !g.themePlayer.IsPlaying() {
 			g.themePlayer.Rewind()
 			g.themePlayer.Play()
+		}
+
+		if g.board.snake.justAte {
+			g.eatPlayer.Rewind()
+			g.eatPlayer.Play()
 		}
 		g.board.Update(g.input)
 

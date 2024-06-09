@@ -29,4 +29,7 @@ func Space() bool {
 	return ebiten.IsKeyPressed(ebiten.KeySpace)
 }
 
+func Escape() bool {
+	return ebiten.IsKeyPressed(ebiten.KeyEscape)
+}
 

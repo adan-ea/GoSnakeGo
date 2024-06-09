@@ -2,14 +2,20 @@ package game
 
 import (
 	"bytes"
+	"image/color"
 	"log"
+	"strconv"
 
 	"github.com/adan-ea/GoSnakeGo/constants"
 	raudio "github.com/adan-ea/GoSnakeGo/resources/audio"
+	"github.com/adan-ea/GoSnakeGo/resources/fonts"
+	"github.com/adan-ea/GoSnakeGo/resources/images"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/audio"
 	"github.com/hajimehoshi/ebiten/v2/audio/vorbis"
 	"github.com/hajimehoshi/ebiten/v2/audio/wav"
+	"github.com/hajimehoshi/ebiten/v2/text"
+	"golang.org/x/image/font"
 )
 
 const (
@@ -41,12 +47,6 @@ func NewGame(rows int, cols int) *Game {
 
 	return game
 }
-
-/*
-func NewGame() *Game {
-
-}
-*/
 
 // initAudio initializes the audio context and players
 func (g *Game) initAudio() {
@@ -127,6 +127,10 @@ func (g *Game) Update() error {
 			g.board = NewBoard(boardRows, boardCols)
 			g.mode = ModeGame
 		}
+
+		if Escape() {
+			g.mode = ModeTitle
+		}
 	}
 
 	return nil
@@ -136,9 +140,56 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	switch g.mode {
 	case ModeGame:
 		g.board.Draw(screen)
+	case ModeGameOver:
+		g.DrawGameOver(screen)
 	}
+
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
 	return constants.ScreenWidth, constants.ScreenHeight
+}
+
+func (g *Game) DrawGameOver(screen *ebiten.Image) {
+	sx := float64(constants.ScreenWidth / 2)
+	sy := float64(constants.ScreenHeight / 2)
+
+	// Create the options and set the scale
+	op := &ebiten.DrawImageOptions{}
+	scaleFactor := 0.8
+	op.GeoM.Scale(scaleFactor, scaleFactor)
+
+	// Adjust the translation to center the scaled image
+	imageWidth := images.GameOverSprite.Bounds().Dx()
+	imageHeight := images.GameOverSprite.Bounds().Dy()
+	scaledWidth := float64(imageWidth) * scaleFactor
+	scaledHeight := float64(imageHeight) * scaleFactor
+	op.GeoM.Translate(sx-scaledWidth/2, sy-scaledHeight/2)
+
+	// Draw the scaled image
+	screen.DrawImage(images.GameOverSprite, op)
+
+	// Set the positions for the text
+	gameOverText := "Game Over"
+	scoreText := "Score: " + strconv.Itoa(g.board.score)
+	pressSpaceText := "Press space to play again"
+	pressEscapeText := "Press escape to return to the title screen"
+
+	gameOverX := (constants.ScreenWidth - font.MeasureString(fonts.BigFont, gameOverText).Round()) / 2
+	gameOverY := (constants.ScreenHeight / 2) - 50
+
+	scoreX := (constants.ScreenWidth - font.MeasureString(fonts.RegularFont, scoreText).Round()) / 2
+	scoreY := gameOverY + 50
+
+	pressStartX := (constants.ScreenWidth - font.MeasureString(fonts.RegularFont, pressSpaceText).Round()) / 2
+	pressStartY := scoreY + 30
+
+	pressEscapeX := (constants.ScreenWidth - font.MeasureString(fonts.RegularFont, pressEscapeText).Round()) / 2
+	pressEscapeY := pressStartY + 30
+
+	// Draw the text
+	text.Draw(screen, gameOverText, fonts.BigFont, gameOverX, gameOverY, color.White)
+	text.Draw(screen, scoreText, fonts.RegularFont, scoreX, scoreY, color.White)
+	text.Draw(screen, pressSpaceText, fonts.RegularFont, pressStartX, pressStartY, color.White)
+	text.Draw(screen, pressEscapeText, fonts.RegularFont, pressEscapeX, pressEscapeY, color.White)
 }

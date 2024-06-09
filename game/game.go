@@ -1,19 +1,14 @@
 package game
 
 import (
-	"bytes"
 	"image/color"
-	"log"
 	"strconv"
 
 	"github.com/adan-ea/GoSnakeGo/constants"
-	raudio "github.com/adan-ea/GoSnakeGo/resources/audio"
+	"github.com/adan-ea/GoSnakeGo/resources/audio"
 	"github.com/adan-ea/GoSnakeGo/resources/fonts"
 	"github.com/adan-ea/GoSnakeGo/resources/images"
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/audio"
-	"github.com/hajimehoshi/ebiten/v2/audio/vorbis"
-	"github.com/hajimehoshi/ebiten/v2/audio/wav"
 	"github.com/hajimehoshi/ebiten/v2/text"
 	"golang.org/x/image/font"
 )
@@ -23,116 +18,50 @@ const (
 	nbScoreSaved  = 5
 )
 
-var justChanged bool
+var sizeChanged bool
+var colorChanged bool
 
 // Game represents the game state and logic
 type Game struct {
 	input *Input
 	board *Board
 	size  Size
+	color Color
 	mode  Mode
-
-	audioContext   *audio.Context
-	hitPlayer      *audio.Player
-	eatPlayer      *audio.Player
-	gameOverPlayer *audio.Player
-	themePlayer    *audio.Player
 }
 
 func NewGame() *Game {
 	game := &Game{
-		input: NewInput(),
+		input: newInput(),
 	}
-	game.initAudio()
 
 	return game
-}
-
-// initAudio initializes the audio context and players
-func (g *Game) initAudio() {
-	if g.audioContext == nil {
-		g.audioContext = audio.NewContext(48000)
-	}
-
-	hitD, err := vorbis.DecodeWithoutResampling(bytes.NewReader(raudio.Hit_ogg))
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	g.hitPlayer, err = g.audioContext.NewPlayer(hitD)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	eatD, err := vorbis.DecodeWithoutResampling(bytes.NewReader(raudio.Eat_ogg))
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	g.eatPlayer, err = g.audioContext.NewPlayer(eatD)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	gameOverD, err := wav.DecodeWithoutResampling(bytes.NewReader(raudio.GameOver_wav))
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	themeD, err := wav.DecodeWithoutResampling(bytes.NewReader(raudio.TetrisTheme_wav))
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	g.themePlayer, err = g.audioContext.NewPlayer(themeD)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	g.gameOverPlayer, err = g.audioContext.NewPlayer(gameOverD)
-	if err != nil {
-		log.Fatal(err)
-	}
 }
 
 func (g *Game) Update() error {
 
 	switch g.mode {
 	case ModeTitle:
-		if KeyS() && !justChanged {
-			justChanged = true
-			g.size = (g.size + 1) % 3
-		} else if !KeyS() {
-			justChanged = false
-		}
+		handleSizeOption(g)
+		handleColorOption(g)
 		if Space() {
-			g.board = NewBoard(g.size)
+			g.board = newBoard(g.size, g.color)
 			g.mode = ModeGame
-			g.themePlayer.Rewind()
 		}
 	case ModeGame:
 		if g.board.gameOver {
-			g.gameOverPlayer.Rewind()
-			g.gameOverPlayer.Play()
+			audio.PlayOnce(audio.GameOverPlayer)
 			g.mode = ModeGameOver
 		}
 
-		if !g.themePlayer.IsPlaying() {
-			g.themePlayer.Rewind()
-			g.themePlayer.Play()
-		}
-
-		if g.board.snake.justAte {
-			g.eatPlayer.Rewind()
-			g.eatPlayer.Play()
-		}
+		audio.PlayLoop(audio.ThemePlayer)
 		g.board.Update(g.input)
 
 	case ModeGameOver:
-		g.themePlayer.Pause()
+		audio.ThemePlayer.Pause()
 
 		if Space() {
-			g.board = NewBoard(g.size)
+			g.board = newBoard(g.size, g.color)
 			g.mode = ModeGame
 		}
 
@@ -159,9 +88,28 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
 	return constants.ScreenWidth, constants.ScreenHeight
 }
 
+func handleColorOption(g *Game) {
+	if KeyC() && !colorChanged {
+		colorChanged = true
+		g.color = (g.color + 1) % nbColors
+	} else if !KeyC() {
+		colorChanged = false
+	}
+}
+
+func handleSizeOption(g *Game) {
+	if KeyS() && !sizeChanged {
+		sizeChanged = true
+		g.size = (g.size + 1) % nbSize
+	} else if !KeyS() {
+		sizeChanged = false
+	}
+}
+
 func (g *Game) DrawMainPage(screen *ebiten.Image) {
 	title := "Go Snake Go!"
 	sizeText := "Size: " + getSizeText(g.size)
+	colorText := "Color: " + getColorText(g.color)
 	startText := "Space to start"
 
 	// Set the positions for the text
@@ -171,12 +119,16 @@ func (g *Game) DrawMainPage(screen *ebiten.Image) {
 	sizeX := (constants.ScreenWidth - font.MeasureString(fonts.RegularFont, sizeText).Round()) / 2
 	sizeY := titleY + 50
 
+	colorX := (constants.ScreenWidth - font.MeasureString(fonts.RegularFont, colorText).Round()) / 2
+	colorY := sizeY + 50
+
 	startX := (constants.ScreenWidth - font.MeasureString(fonts.RegularFont, startText).Round()) / 2
 	startY := constants.ScreenHeight - 50
 
 	// Draw the text
 	text.Draw(screen, title, fonts.BigFont, titleX, titleY, color.White)
 	text.Draw(screen, sizeText, fonts.RegularFont, sizeX, sizeY, color.White)
+	text.Draw(screen, colorText, fonts.RegularFont, colorX, colorY, color.White)
 	text.Draw(screen, startText, fonts.RegularFont, startX, startY, color.White)
 }
 

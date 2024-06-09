@@ -12,6 +12,8 @@ go run main.go
 ## Usage
 Press `S` to change the board size
 
+Press `C` to change the snake color
+
 Press `Space` to start the game
 
 Use the arrow keys or `WASD` (`ZQSD` works too) to move the snake

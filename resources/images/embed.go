@@ -17,11 +17,11 @@ const (
 
 	bodySpriteBluePath   = "resources/images/snake/body_sprite_blue.png"
 	bodySpritePurplePath = "resources/images/snake/body_sprite_purple.png"
-	bodySpriteRedPath = "resources/images/snake/body_sprite_red.png"
+	bodySpriteRedPath    = "resources/images/snake/body_sprite_red.png"
 
 	tailSpriteBluePath   = "resources/images/snake/tail_sprite_blue.png"
 	tailSpritePurplePath = "resources/images/snake/tail_sprite_purple.png"
-	tailSpriteRedPath = "resources/images/snake/tail_sprite_red.png"
+	tailSpriteRedPath    = "resources/images/snake/tail_sprite_red.png"
 )
 
 // Food Sprites
@@ -55,7 +55,7 @@ var (
 	IconSprite       *ebiten.Image
 )
 
-func LoadImage(path string) *ebiten.Image {
+func loadImage(path string) *ebiten.Image {
 	img, _, err := ebitenutil.NewImageFromFile(path)
 	if err != nil {
 		panic(err)
@@ -63,26 +63,26 @@ func LoadImage(path string) *ebiten.Image {
 	return img
 }
 
-func LoadImages() {
-	BackgroundSprite = LoadImage(backgroundImagePath)
-	GameOverSprite = LoadImage(gameOverImagePath)
+func InitImages() {
+	BackgroundSprite = loadImage(backgroundImagePath)
+	GameOverSprite = loadImage(gameOverImagePath)
 
-	HeadSprite = LoadImage(headSpriteLeftPath)
+	HeadSprite = loadImage(headSpriteLeftPath)
 
 	BodySprite = map[int]*ebiten.Image{
-		0: LoadImage(bodySpriteBluePath),
-		1: LoadImage(bodySpritePurplePath),
-		2: LoadImage(bodySpriteRedPath),
+		0: loadImage(bodySpriteBluePath),
+		1: loadImage(bodySpritePurplePath),
+		2: loadImage(bodySpriteRedPath),
 	}
 
 	TailSprite = map[int]*ebiten.Image{
-		0: LoadImage(tailSpriteBluePath),
-		1: LoadImage(tailSpritePurplePath),
-		2: LoadImage(tailSpriteRedPath),
+		0: loadImage(tailSpriteBluePath),
+		1: loadImage(tailSpritePurplePath),
+		2: loadImage(tailSpriteRedPath),
 	}
 
-	FoodSprite = LoadImage(foodSpritePath)
-	NumbersSprite = LoadImage(numbersSpritePath)
-	StarSprite = LoadImage(starSpritePath)
-	IconSprite = LoadImage(iconSpritePath)
+	FoodSprite = loadImage(foodSpritePath)
+	NumbersSprite = loadImage(numbersSpritePath)
+	StarSprite = loadImage(starSpritePath)
+	IconSprite = loadImage(iconSpritePath)
 }

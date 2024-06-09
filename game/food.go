@@ -11,7 +11,7 @@ type Food struct {
 	x, y int
 }
 
-func NewFood(x, y int) *Food {
+func newFood(x, y int) *Food {
 	return &Food{
 		x: x,
 		y: y,

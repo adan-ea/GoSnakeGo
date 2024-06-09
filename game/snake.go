@@ -2,9 +2,11 @@ package game
 
 import (
 	"image"
+	"math/rand"
 	"time"
 
 	"github.com/adan-ea/GoSnakeGo/constants"
+	"github.com/adan-ea/GoSnakeGo/resources/audio"
 	"github.com/adan-ea/GoSnakeGo/resources/images"
 	"github.com/hajimehoshi/ebiten/v2"
 )
@@ -31,8 +33,11 @@ type Snake struct {
 	lastFrameTime    time.Time
 }
 
-// NewSnake creates a new snake with the given body and direction
-func NewSnake(color Color) *Snake {
+// newSnake creates a new snake with the given body and direction
+func newSnake(color Color) *Snake {
+	if color == RandomColor {
+		color = Color(rand.Intn(nbColors - 1))
+	}
 	return &Snake{
 		body: []Point{
 			{x: 1, y: 1},
@@ -48,7 +53,7 @@ func (s *Snake) Head() Point {
 	return s.body[len(s.body)-1]
 }
 
-func (s *Snake) ChangeDirection(newDir Direction) {
+func (s *Snake) changeDirection(newDir Direction) {
 	opposites := map[Direction]Direction{
 		Up:    Down,
 		Right: Left,
@@ -64,14 +69,14 @@ func (s *Snake) ChangeDirection(newDir Direction) {
 	}
 }
 
-// HeadHits checks if the snake's head is at the given position
-func (s *Snake) HeadHits(x, y int) bool {
+// headHits checks if the snake's head is at the given position
+func (s *Snake) headHits(x, y int) bool {
 	h := s.Head()
 
 	return h.x == x && h.y == y
 }
 
-func (s *Snake) HeadHitsBody() bool {
+func (s *Snake) headHitsBody() bool {
 	h := s.Head()
 	bodyWithoutHead := s.body[:len(s.body)-1]
 
@@ -84,8 +89,8 @@ func (s *Snake) HeadHitsBody() bool {
 	return false
 }
 
-// Move moves the snake one step in its current direction
-func (s *Snake) Move() {
+// move moves the snake one step in its current direction
+func (s *Snake) move() {
 	s.changedDirection = false
 	// Create a copy of the head position to avoid modifying the original directly
 	h := s.Head()
@@ -103,6 +108,7 @@ func (s *Snake) Move() {
 	}
 
 	if s.justAte {
+		audio.PlayOnce(audio.EatPlayer)
 		s.body = append(s.body, newHead)
 		s.justAte = false
 	} else {
@@ -112,7 +118,7 @@ func (s *Snake) Move() {
 
 // Draw draws the snake onto the screen
 func (s *Snake) Draw(screen *ebiten.Image, offsetX, offsetY int) {
-	s.UpdateAnimation()
+	s.updateAnimation()
 	// Draw the snake's body and tail first
 	for i := 0; i < len(s.body); i++ {
 		part := s.body[i]
@@ -211,8 +217,8 @@ func (s *Snake) handleTail(screen *ebiten.Image, sx, sy float64, i int) {
 	screen.DrawImage(tailImage, tailOp)
 }
 
-// UpdateAnimation updates the snake's animation frame
-func (s *Snake) UpdateAnimation() {
+// updateAnimation updates the snake's animation frame
+func (s *Snake) updateAnimation() {
 	if time.Since(s.lastFrameTime) >= time.Millisecond*frameDelay {
 		s.currentFrame = (s.currentFrame + 1) % frameCount
 		s.lastFrameTime = time.Now()

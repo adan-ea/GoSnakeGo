@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/adan-ea/GoSnakeGo/constants"
+	"github.com/adan-ea/GoSnakeGo/resources/audio"
 	"github.com/adan-ea/GoSnakeGo/resources/images"
 	"github.com/hajimehoshi/ebiten/v2"
 )
@@ -21,15 +22,15 @@ type Board struct {
 	timer     time.Time
 }
 
-func NewBoard(size Size) *Board {
-	randomColor := Color(rand.Intn(3))
+func newBoard(size Size, color Color) *Board {
 	rows, cols := getGridSize(size)
+	realSize := getSizeFromRowsCols(rows, cols)
 	game := &Board{
 		rows:      rows,
 		cols:      cols,
 		timer:     time.Now(),
-		highScore: getHighestScore(size),
-		snake:     NewSnake(randomColor),
+		highScore: getHighestScore(realSize),
+		snake:     newSnake(color),
 	}
 	game.placeFood()
 
@@ -44,7 +45,7 @@ func (b *Board) Update(input *Input) error {
 	// snake goes faster when there are more points
 	interval := calculateInterval(b.score)
 	if newDir, ok := Dir(); ok {
-		b.snake.ChangeDirection(newDir)
+		b.snake.changeDirection(newDir)
 	}
 
 	if time.Since(b.timer) >= interval {
@@ -60,14 +61,15 @@ func (b *Board) Update(input *Input) error {
 
 func (b *Board) moveSnake() error {
 	// remove tail first, add 1 in front
-	b.snake.Move()
-	if b.snakeLeftBoard() || b.snake.HeadHitsBody() {
+	b.snake.move()
+	if b.snakeLeftBoard() || b.snake.headHitsBody() {
+		audio.PlayOnce(audio.HitPlayer)
 		b.gameOver = true
 		saveHighScore(b.score, getSizeFromRowsCols(b.rows, b.cols))
 		return nil
 	}
 
-	if b.snake.HeadHits(b.food.x, b.food.y) {
+	if b.snake.headHits(b.food.x, b.food.y) {
 		// the snake grows on the next move
 		b.snake.justAte = true
 
@@ -100,22 +102,22 @@ func (b *Board) placeFood() {
 		}
 	}
 
-	b.food = NewFood(x, y)
+	b.food = newFood(x, y)
 }
 
 const (
-	BaseInterval  = time.Millisecond * 200
-	MinInterval   = time.Millisecond * 50
-	SpeedIncrease = time.Millisecond * 5
+	baseInterval  = time.Millisecond * 200
+	minInterval   = time.Millisecond * 50
+	speedIncrease = time.Millisecond * 5
 )
 
 func calculateInterval(score int) time.Duration {
 	// Calculate the new interval by decreasing it linearly with the score
-	newInterval := BaseInterval - time.Duration(score)*SpeedIncrease
+	newInterval := baseInterval - time.Duration(score)*speedIncrease
 
 	// Ensure the interval does not go below the minimum interval
-	if newInterval < MinInterval {
-		return MinInterval
+	if newInterval < minInterval {
+		return minInterval
 	}
 	return newInterval
 }

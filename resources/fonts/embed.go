@@ -13,7 +13,7 @@ var (
 	BigFont     font.Face
 )
 
-func Init() {
+func InitFonts() {
 	fontBytes, err := os.ReadFile("resources/fonts/font.TTF")
 	if err != nil {
 		log.Fatal(err)

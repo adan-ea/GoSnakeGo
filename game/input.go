@@ -4,7 +4,7 @@ import "github.com/hajimehoshi/ebiten/v2"
 
 type Input struct{}
 
-func NewInput() *Input {
+func newInput() *Input {
 	return &Input{}
 }
 
@@ -27,6 +27,10 @@ func Dir() (Direction, bool) {
 
 func KeyS() bool {
 	return ebiten.IsKeyPressed(ebiten.KeyS)
+}
+
+func KeyC() bool {
+	return ebiten.IsKeyPressed(ebiten.KeyC)
 }
 
 func Space() bool {

@@ -24,6 +24,7 @@ const (
 type Snake struct {
 	body             []Point
 	direction        Direction
+	color            Color
 	justAte          bool
 	changedDirection bool
 	currentFrame     int
@@ -31,12 +32,13 @@ type Snake struct {
 }
 
 // NewSnake creates a new snake with the given body and direction
-func NewSnake() *Snake {
+func NewSnake(color Color) *Snake {
 	return &Snake{
 		body: []Point{
 			{x: 1, y: 1},
 			{x: 2, y: 1},
 			{x: 3, y: 1}},
+		color:         color,
 		lastFrameTime: time.Now(),
 	}
 }
@@ -163,26 +165,26 @@ func (s *Snake) handleBody(screen *ebiten.Image, sx, sy float64, i int) {
 	switch {
 	// Vertical
 	case prev.x == next.x:
-		bodyImage = images.BodySprite.SubImage(image.Rect(frameWidth, 0, 2*frameWidth, frameHeight)).(*ebiten.Image)
+		bodyImage = images.BodySprite[int(s.color)].SubImage(image.Rect(frameWidth, 0, 2*frameWidth, frameHeight)).(*ebiten.Image)
 	// Horizontal
 	case prev.y == next.y:
-		bodyImage = images.BodySprite.SubImage(image.Rect(0, 0, frameWidth, frameHeight)).(*ebiten.Image)
+		bodyImage = images.BodySprite[int(s.color)].SubImage(image.Rect(0, 0, frameWidth, frameHeight)).(*ebiten.Image)
 
 	// Top left corner
 	case (prev.x > curr.x && next.y < curr.y) || (next.x > curr.x && prev.y < curr.y):
-		bodyImage = images.BodySprite.SubImage(image.Rect(4*frameWidth, 0, 5*frameWidth, frameHeight)).(*ebiten.Image)
+		bodyImage = images.BodySprite[int(s.color)].SubImage(image.Rect(4*frameWidth, 0, 5*frameWidth, frameHeight)).(*ebiten.Image)
 
 	// Top right corner
 	case (prev.x < curr.x && next.y < curr.y) || (next.x < curr.x && prev.y < curr.y):
-		bodyImage = images.BodySprite.SubImage(image.Rect(5*frameWidth, 0, 6*frameWidth, frameHeight)).(*ebiten.Image)
+		bodyImage = images.BodySprite[int(s.color)].SubImage(image.Rect(5*frameWidth, 0, 6*frameWidth, frameHeight)).(*ebiten.Image)
 
 	// Bottom right corner
 	case (prev.x < curr.x && next.y > curr.y) || (next.x < curr.x && prev.y > curr.y):
-		bodyImage = images.BodySprite.SubImage(image.Rect(3*frameWidth, 0, 4*frameWidth, frameHeight)).(*ebiten.Image)
+		bodyImage = images.BodySprite[int(s.color)].SubImage(image.Rect(3*frameWidth, 0, 4*frameWidth, frameHeight)).(*ebiten.Image)
 
 	// Bottom left corner
 	case (prev.x > curr.x && next.y > curr.y) || (next.x > curr.x && prev.y > curr.y):
-		bodyImage = images.BodySprite.SubImage(image.Rect(2*frameWidth, 0, 3*frameWidth, frameHeight)).(*ebiten.Image)
+		bodyImage = images.BodySprite[int(s.color)].SubImage(image.Rect(2*frameWidth, 0, 3*frameWidth, frameHeight)).(*ebiten.Image)
 	}
 
 	bodyOp := &ebiten.DrawImageOptions{}
@@ -198,13 +200,13 @@ func (s *Snake) handleTail(screen *ebiten.Image, sx, sy float64, i int) {
 	var tailImage *ebiten.Image
 	switch {
 	case tail.x > prev.x: // Going left
-		tailImage = images.TailSprite.SubImage(image.Rect(3*frameWidth, 0, 4*frameWidth, frameHeight)).(*ebiten.Image)
+		tailImage = images.TailSprite[int(s.color)].SubImage(image.Rect(3*frameWidth, 0, 4*frameWidth, frameHeight)).(*ebiten.Image)
 	case tail.x < prev.x: // Going right
-		tailImage = images.TailSprite.SubImage(image.Rect(0, 0, frameWidth, frameHeight)).(*ebiten.Image)
+		tailImage = images.TailSprite[int(s.color)].SubImage(image.Rect(0, 0, frameWidth, frameHeight)).(*ebiten.Image)
 	case tail.y > prev.y: // Going up
-		tailImage = images.TailSprite.SubImage(image.Rect(2*frameWidth, 0, 3*frameWidth, frameHeight)).(*ebiten.Image)
+		tailImage = images.TailSprite[int(s.color)].SubImage(image.Rect(2*frameWidth, 0, 3*frameWidth, frameHeight)).(*ebiten.Image)
 	case tail.y < prev.y: // Going down
-		tailImage = images.TailSprite.SubImage(image.Rect(frameWidth, 0, 2*frameWidth, frameHeight)).(*ebiten.Image)
+		tailImage = images.TailSprite[int(s.color)].SubImage(image.Rect(frameWidth, 0, 2*frameWidth, frameHeight)).(*ebiten.Image)
 	}
 
 	tailOp := &ebiten.DrawImageOptions{}

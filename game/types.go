@@ -23,3 +23,12 @@ const (
 	Down
 	Up
 )
+
+// Color represents possible colors for the snake
+type Color int
+
+const (
+	Blue Color = iota
+	Purple
+	Red
+)

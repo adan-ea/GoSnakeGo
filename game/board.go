@@ -21,12 +21,13 @@ type Board struct {
 }
 
 func NewBoard(rows int, cols int) *Board {
+	randomColor := Color(rand.Intn(3))
 	game := &Board{
 		rows:      rows,
 		cols:      cols,
 		timer:     time.Now(),
 		highScore: getHighestScore(),
-		snake:     NewSnake(),
+		snake:     NewSnake(randomColor),
 	}
 	game.placeFood()
 

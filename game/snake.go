@@ -111,10 +111,7 @@ func (s *Snake) Move() {
 }
 
 // Draw draws the snake onto the screen
-func (s *Snake) Draw(screen *ebiten.Image) {
-	// Calculate the offset to center the game area
-	offsetX := (constants.ScreenWidth - constants.GameWidth) / 2
-	offsetY := (constants.ScreenHeight - constants.GameHeight) / 2
+func (s *Snake) Draw(screen *ebiten.Image, offsetX, offsetY int) {
 	s.UpdateAnimation()
 	// Draw the snake's body and tail first
 	for i := 0; i < len(s.body); i++ {

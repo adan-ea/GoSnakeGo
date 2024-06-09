@@ -10,13 +10,15 @@ go run main.go
 ```
 
 ## Usage
-Press space to start the game
+Press `S` to change the board size
 
-Use the arrow keys or WASD (ZQSD works too) to move the snake
+Press `Space` to start the game
 
-If you die press space to restart or Escape to quit to the main menu
+Use the arrow keys or `WASD` (`ZQSD` works too) to move the snake
 
-If you die too often and want to give up press alt+f4
+If you die press `Space` to restart or `Escape` to quit to the main menu
+
+If you die too often and want to give up press `alt+f4`
 
 ## Credits
 

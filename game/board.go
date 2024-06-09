@@ -1,6 +1,7 @@
 package game
 
 import (
+	"image/color"
 	"math/rand"
 	"time"
 
@@ -20,13 +21,14 @@ type Board struct {
 	timer     time.Time
 }
 
-func NewBoard(rows int, cols int) *Board {
+func NewBoard(size Size) *Board {
 	randomColor := Color(rand.Intn(3))
+	rows, cols := getGridSize(size)
 	game := &Board{
 		rows:      rows,
 		cols:      cols,
 		timer:     time.Now(),
-		highScore: getHighestScore(),
+		highScore: getHighestScore(size),
 		snake:     NewSnake(randomColor),
 	}
 	game.placeFood()
@@ -61,7 +63,7 @@ func (b *Board) moveSnake() error {
 	b.snake.Move()
 	if b.snakeLeftBoard() || b.snake.HeadHitsBody() {
 		b.gameOver = true
-		saveHighScore(b.score)
+		saveHighScore(b.score, getSizeFromRowsCols(b.rows, b.cols))
 		return nil
 	}
 
@@ -119,22 +121,34 @@ func calculateInterval(score int) time.Duration {
 }
 
 func (b *Board) Draw(screen *ebiten.Image) {
-	// Calculate the offset to center the game area
-	offsetX := (constants.ScreenWidth - constants.GameWidth) / 2
-	offsetY := (constants.ScreenHeight - constants.GameHeight) / 2
+	// Fill the screen with the light blue color
+	screen.Fill(constants.LightBlue)
 
-	// Draw the background in the game area
+	gameWidth := b.cols * constants.TileSize
+	gameHeight := b.rows * constants.TileSize
+
+	// Calculate the offset to center the game area
+	offsetX := (constants.ScreenWidth - gameWidth) / 2
+	offsetY := (constants.ScreenHeight - gameHeight) / 2
+
+	wallThickness := constants.TileSize / 2
+	wallImage := ebiten.NewImage(gameWidth+constants.TileSize, gameHeight+constants.TileSize)
+	wallImage.Fill(color.White)
 	op := &ebiten.DrawImageOptions{}
-	for y := 0; y < constants.GameHeight; y += constants.TileSize * 2 {
-		for x := 0; x < constants.GameWidth; x += constants.TileSize * 2 {
+
+	op.GeoM.Translate(float64(offsetX-wallThickness), float64(offsetY-wallThickness))
+	screen.DrawImage(wallImage, op)
+
+	for y := 0; y < b.rows/2; y++ {
+		for x := 0; x < b.cols/2; x++ {
 			op.GeoM.Reset()
-			op.GeoM.Translate(float64(x+offsetX), float64(y+offsetY))
+			op.GeoM.Translate(float64(x*constants.TileSize*2+offsetX), float64(y*constants.TileSize*2+offsetY))
 			screen.DrawImage(images.BackgroundSprite, op)
 		}
 	}
 
-	b.snake.Draw(screen)
-	b.food.Draw(screen)
-	b.drawScore(screen, b.score, 40, 7)
+	b.snake.Draw(screen, offsetX, offsetY)
+	b.food.Draw(screen, offsetX, offsetY)
+	b.drawScore(screen, b.score, 0, 7)
 	b.drawHighScore(screen, b.highScore, 550, 7)
 }

@@ -14,7 +14,7 @@ import (
 func main() {
 	images.LoadImages()
 	fonts.Init()
-	g := game.NewGame(18, 18)
+	g := game.NewGame()
 
 	ebiten.SetWindowSize(constants.ScreenWidth, constants.ScreenHeight)
 	ebiten.SetWindowIcon([]image.Image{images.IconSprite})

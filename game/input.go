@@ -25,6 +25,10 @@ func Dir() (Direction, bool) {
 	return 0, false
 }
 
+func KeyS() bool {
+	return ebiten.IsKeyPressed(ebiten.KeyS)
+}
+
 func Space() bool {
 	return ebiten.IsKeyPressed(ebiten.KeySpace)
 }
@@ -32,4 +36,3 @@ func Space() bool {
 func Escape() bool {
 	return ebiten.IsKeyPressed(ebiten.KeyEscape)
 }
-

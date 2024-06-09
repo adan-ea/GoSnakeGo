@@ -21,14 +21,15 @@ import (
 const (
 	bestScorePath = "resources/scoreboard.txt"
 	nbScoreSaved  = 5
-	boardRows     = 18
-	boardCols     = 18
 )
+
+var justChanged bool
 
 // Game represents the game state and logic
 type Game struct {
 	input *Input
 	board *Board
+	size  Size
 	mode  Mode
 
 	audioContext   *audio.Context
@@ -38,10 +39,9 @@ type Game struct {
 	themePlayer    *audio.Player
 }
 
-func NewGame(rows int, cols int) *Game {
+func NewGame() *Game {
 	game := &Game{
 		input: NewInput(),
-		board: NewBoard(boardRows, boardCols),
 	}
 	game.initAudio()
 
@@ -96,9 +96,17 @@ func (g *Game) initAudio() {
 }
 
 func (g *Game) Update() error {
+
 	switch g.mode {
 	case ModeTitle:
+		if KeyS() && !justChanged {
+			justChanged = true
+			g.size = (g.size + 1) % 3
+		} else if !KeyS() {
+			justChanged = false
+		}
 		if Space() {
+			g.board = NewBoard(g.size)
 			g.mode = ModeGame
 			g.themePlayer.Rewind()
 		}
@@ -124,7 +132,7 @@ func (g *Game) Update() error {
 		g.themePlayer.Pause()
 
 		if Space() {
-			g.board = NewBoard(boardRows, boardCols)
+			g.board = NewBoard(g.size)
 			g.mode = ModeGame
 		}
 
@@ -138,16 +146,38 @@ func (g *Game) Update() error {
 
 func (g *Game) Draw(screen *ebiten.Image) {
 	switch g.mode {
+	case ModeTitle:
+		g.DrawMainPage(screen)
 	case ModeGame:
 		g.board.Draw(screen)
 	case ModeGameOver:
 		g.DrawGameOver(screen)
 	}
-
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
 	return constants.ScreenWidth, constants.ScreenHeight
+}
+
+func (g *Game) DrawMainPage(screen *ebiten.Image) {
+	title := "Go Snake Go!"
+	sizeText := "Size: " + getSizeText(g.size)
+	startText := "Space to start"
+
+	// Set the positions for the text
+	titleX := (constants.ScreenWidth - font.MeasureString(fonts.BigFont, title).Round()) / 2
+	titleY := (constants.ScreenHeight / 2) - 150
+
+	sizeX := (constants.ScreenWidth - font.MeasureString(fonts.RegularFont, sizeText).Round()) / 2
+	sizeY := titleY + 50
+
+	startX := (constants.ScreenWidth - font.MeasureString(fonts.RegularFont, startText).Round()) / 2
+	startY := constants.ScreenHeight - 50
+
+	// Draw the text
+	text.Draw(screen, title, fonts.BigFont, titleX, titleY, color.White)
+	text.Draw(screen, sizeText, fonts.RegularFont, sizeX, sizeY, color.White)
+	text.Draw(screen, startText, fonts.RegularFont, startX, startY, color.White)
 }
 
 func (g *Game) DrawGameOver(screen *ebiten.Image) {
@@ -176,13 +206,13 @@ func (g *Game) DrawGameOver(screen *ebiten.Image) {
 	pressEscapeText := "Press escape to return to the title screen"
 
 	gameOverX := (constants.ScreenWidth - font.MeasureString(fonts.BigFont, gameOverText).Round()) / 2
-	gameOverY := (constants.ScreenHeight / 2) - 50
+	gameOverY := (constants.ScreenHeight / 2) - 150
 
 	scoreX := (constants.ScreenWidth - font.MeasureString(fonts.RegularFont, scoreText).Round()) / 2
 	scoreY := gameOverY + 50
 
 	pressStartX := (constants.ScreenWidth - font.MeasureString(fonts.RegularFont, pressSpaceText).Round()) / 2
-	pressStartY := scoreY + 30
+	pressStartY := constants.ScreenHeight - 50
 
 	pressEscapeX := (constants.ScreenWidth - font.MeasureString(fonts.RegularFont, pressEscapeText).Round()) / 2
 	pressEscapeY := pressStartY + 30

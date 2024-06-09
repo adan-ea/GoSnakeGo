@@ -19,18 +19,11 @@ func NewFood(x, y int) *Food {
 }
 
 // Draw renders the food on the screen
-func (f *Food) Draw(screen *ebiten.Image) {
-	offsetX := (constants.ScreenWidth - constants.GameWidth) / 2
-	offsetY := (constants.ScreenHeight - constants.GameHeight) / 2
+func (f *Food) Draw(screen *ebiten.Image, offsetX, offsetY int) {
 	sx := float64(offsetX + f.x*constants.TileSize)
 	sy := float64(offsetY + f.y*constants.TileSize)
 
 	op := &ebiten.DrawImageOptions{}
 	op.GeoM.Translate(sx, sy)
 	screen.DrawImage(images.FoodSprite, op)
-}
-
-// getFoodPosition returns the position of the food
-func (f *Food) getFoodPosition() Point {
-	return Point{x: f.x, y: f.y}
 }

@@ -48,8 +48,8 @@ func (b *Board) drawHighScore(screen *ebiten.Image, score int, x, y int) {
 	b.DrawScoreWithSprite(screen, images.StarSprite, score, x, y)
 }
 
-// saveHighScore saves the score along with the current date and time to the scoreboard file
-func saveHighScore(score int) {
+// saveHighScore saves the score along with the current date, size text, and time to the scoreboard file
+func saveHighScore(score int, size Size) {
 	if score == 0 {
 		return
 	}
@@ -62,42 +62,52 @@ func saveHighScore(score int) {
 
 	fileContent := string(f)
 
-	// Add the new score with date and time to the file content
+	// Add the new score with date, size, and time to the file content
 	currentTime := time.Now().Format("2006-01-02 15:04:05")
-	fileContent += fmt.Sprintf("%s;%d\n", currentTime, score)
+	fileContent += fmt.Sprintf("%s;%s;%d\n", currentTime, getSizeText(size), score)
 	scoresStr := strings.Split(strings.TrimSpace(fileContent), "\n")
 
-	// Parse the scores and date-time information
+	// Parse the scores, date-time, and size text information
 	var scores []struct {
 		time  string
+		size  string
 		score int
 	}
 	for _, scoreStr := range scoresStr {
 		if scoreStr != "" {
 			parts := strings.Split(scoreStr, ";")
-			if len(parts) != 2 {
+			if len(parts) != 3 {
 				continue // Skip invalid entries
 			}
-			score, err := strconv.Atoi(parts[1])
+			score, err := strconv.Atoi(parts[2])
 			if err != nil {
 				panic(err)
 			}
 			scores = append(scores, struct {
 				time  string
+				size  string
 				score int
-			}{parts[0], score})
+			}{parts[0], parts[1], score})
 		}
 	}
 
-	// Sort the scores in descending order
-	sort.Slice(scores, func(i, j int) bool {
+	// Sort the scores by size and then by score in descending order
+	sort.SliceStable(scores, func(i, j int) bool {
+		if scores[i].size != scores[j].size {
+			return scores[i].size < scores[j].size
+		}
 		return scores[i].score > scores[j].score
 	})
 
-	// Keep only the top 5 scores
+	// Keep only the top 5 scores for each size
+	seen := make(map[string]int)
 	var topScores []string
-	for i := 0; i < len(scores) && i < nbScoreSaved; i++ {
-		topScores = append(topScores, fmt.Sprintf("%s;%d", scores[i].time, scores[i].score))
+	for _, s := range scores {
+		key := s.size
+		if seen[key] < nbScoreSaved {
+			topScores = append(topScores, fmt.Sprintf("%s;%s;%d", s.time, s.size, s.score))
+			seen[key]++
+		}
 	}
 
 	// Join the top scores into a single string with newlines
@@ -110,8 +120,8 @@ func saveHighScore(score int) {
 	}
 }
 
-// getHighestScore returns the highest score from the scoreboard file
-func getHighestScore() int {
+// getHighestScore returns the highest score from the scoreboard file for the specified size
+func getHighestScore(size Size) int {
 	// Read the file contents
 	f, err := os.ReadFile(bestScorePath)
 	if err != nil {
@@ -121,19 +131,20 @@ func getHighestScore() int {
 	fileContent := string(f)
 	scoresStr := strings.Split(strings.TrimSpace(fileContent), "\n")
 
-	// Parse the scores and date-time information
+	// Parse the scores, size, and date-time information
 	var highestScore int
 	for _, scoreStr := range scoresStr {
 		if scoreStr != "" {
 			parts := strings.Split(scoreStr, ";")
-			if len(parts) != 2 {
+			if len(parts) != 3 {
 				continue // Skip invalid entries
 			}
-			score, err := strconv.Atoi(parts[1])
+			score, err := strconv.Atoi(parts[2])
 			if err != nil {
 				return 0
 			}
-			if score > highestScore {
+			scoreSize := getTextToSize(parts[1])
+			if scoreSize == size && score > highestScore {
 				highestScore = score
 			}
 		}

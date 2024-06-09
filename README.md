@@ -25,6 +25,9 @@ If you die too often and want to give up press `alt+f4`
 ## Credits
 
 - [Snake head](https://www.instagram.com/meyuuart/)
-- Snake body: My incredible drawing skills on paint.net 
+- Snake body: My incredible drawing skills on paint.net
 - [Background](https://kenney.nl/assets/rolling-ball-assets)
+  
+- Eating sound: [Team Fortress 2](https://www.youtube.com/watch?v=b0QDCTLgYCg)
+- Death sound: [Minecraft](https://www.youtube.com/watch?v=S_apkyDBkUY)
 - [Song](https://www.youtube.com/watch?v=7TqGvfx1Xvs)

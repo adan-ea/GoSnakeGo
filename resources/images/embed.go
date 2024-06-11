@@ -32,7 +32,7 @@ const (
 // UI Sprites
 const (
 	numbersSpritePath = "resources/images/ui/numbers.png"
-	starSpritePath    = "resources/images/ui/star.png"
+	trophySpritePath  = "resources/images/ui/trophy.png"
 	iconSpritePath    = "resources/images/ui/icon.png"
 )
 
@@ -51,7 +51,7 @@ var (
 	TailSprite       map[int]*ebiten.Image
 	FoodSprite       *ebiten.Image
 	NumbersSprite    *ebiten.Image
-	StarSprite       *ebiten.Image
+	TrophySprite     *ebiten.Image
 	IconSprite       *ebiten.Image
 )
 
@@ -83,6 +83,6 @@ func InitImages() {
 
 	FoodSprite = loadImage(foodSpritePath)
 	NumbersSprite = loadImage(numbersSpritePath)
-	StarSprite = loadImage(starSpritePath)
+	TrophySprite = loadImage(trophySpritePath)
 	IconSprite = loadImage(iconSpritePath)
 }

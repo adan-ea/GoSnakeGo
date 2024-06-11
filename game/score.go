@@ -45,7 +45,7 @@ func (b *Board) drawScore(screen *ebiten.Image, score int, x, y int) {
 }
 
 func (b *Board) drawHighScore(screen *ebiten.Image, score int, x, y int) {
-	b.DrawScoreWithSprite(screen, images.StarSprite, score, x, y)
+	b.DrawScoreWithSprite(screen, images.TrophySprite, score, x, y)
 }
 
 // saveHighScore saves the score along with the current date, size text, and time to the scoreboard file
